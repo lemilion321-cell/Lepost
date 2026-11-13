@@ -20,6 +20,14 @@ class Base(DeclarativeBase):
 
 
 _is_sqlite = DB_URL.startswith("sqlite")
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logging.info(
+    "DATABASE ENGINE: %s",
+    "SQLite" if _is_sqlite else "PostgreSQL"
+)
+
 engine = create_engine(
     DB_URL,
     connect_args={"check_same_thread": False, "timeout": 30} if _is_sqlite else {},
