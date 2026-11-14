@@ -543,6 +543,7 @@ async function loadAdminUsers() {
         <div class="row-actions">
           <button type="button" class="btn btn-sm btn-primary" data-act="save-user" data-id="${u.id}">Simpan</button>
           <button type="button" class="btn btn-sm ${u.is_suspended ? 'btn-primary' : 'btn-warning'}" data-act="suspend-user" data-id="${u.id}">${u.is_suspended ? 'Aktifkan' : 'Suspend'}</button>
+          <button type="button" class="btn btn-sm btn-danger" data-act="stop-queries" data-id="${u.id}">Stop Query</button>
           <button type="button" class="btn btn-sm btn-danger" data-act="del-user" data-id="${u.id}" data-name="${esc(u.username)}">Hapus user</button>
         </div>`}
       </div>`).join('');
@@ -582,6 +583,15 @@ async function suspendUser(id, el) {
     loadAdminUsers();
   } catch (e) { toast(e.message, true); }
   finally { setBusy(el, false); }
+}
+
+async function stopUserQueries(id) {
+  if (!(await ask('Stop semua query?', 'Semua query aktif milik user ini akan dihentikan.', 'Stop'))) return;
+  try {
+    const r = await api('/admin/users/' + id + '/stop-queries', { method: 'POST' });
+    toast('Query dihentikan: ' + r.stopped + ' query distop.');
+    loadAdminUsers();
+  } catch (e) { toast(e.message, true); }
 }
 
 async function delUser(id, name) {
@@ -1689,6 +1699,7 @@ document.addEventListener('click', e => {
     case 'save-user':        return saveUser(id, el);
     case 'del-user':         return delUser(id, el.dataset.name);
     case 'suspend-user':     return suspendUser(id, el);
+    case 'stop-queries':     return stopUserQueries(id);
     case 'refresh':          return refreshNow();
     case 'toggle':           return toggleQ(id, el.dataset.status, el);
     case 'edit':             return editQ(id);

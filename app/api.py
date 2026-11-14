@@ -824,6 +824,21 @@ def admin_patch_user(uid: int, inp: UserPatch, user: User = Depends(current_user
     return {"ok": True}
 
 
+@router.post("/admin/users/{uid}/stop-queries")
+def admin_stop_user_queries(uid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    _require_admin(user)
+    target = db.get(User, uid)
+    if not target:
+        raise HTTPException(404, "User tidak ditemukan")
+    acc_ids = {i for (i,) in db.query(Account.id).filter(Account.owner_id == uid).all()}
+    stopped = 0
+    for q in db.query(Query).filter(Query.status == "active").all():
+        if _q_acc_ids(q) & acc_ids:
+            q.status = "stopped"
+            stopped += 1
+    db.commit()
+    return {"ok": True, "stopped": stopped}
+
 @router.delete("/admin/users/{uid}")
 def admin_del_user(uid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     _require_admin(user)
