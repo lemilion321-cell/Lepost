@@ -1761,6 +1761,8 @@ async function boot() {
   if (!state.me.is_admin) {
     // Blokir semua kalau suspended
     if (state.me.is_suspended) {
+      const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
+      if (tabBypass) tabBypass.hidden = true;
       const main = $('main');
       if (main) main.innerHTML =
         '<div class="notice exp-banner" style="border-color:#ef4444">' +
@@ -1821,6 +1823,6 @@ async function boot() {
     }
   }).catch(() => {
     // api() sudah handle 401 dengan memanggil logout() langsung, abaikan error lain
-  }), 60000);
+  }), 15000);
 }
 boot();
