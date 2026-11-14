@@ -400,10 +400,10 @@ async function loadAdminStats() {
 }
 
 async function adminStopUserQueries(id, name) {
-  if (!(await ask('Stop semua query?', `Semua query milik "${name}" akan dihentikan paksa.`, 'Stop'))) return;
+  if (!(await ask('Stop query?', `Semua query aktif milik "${name}" akan dihentikan.`, 'Stop'))) return;
   try {
-    await api(`/admin/users/${id}/stop`, { method: 'POST' });
-    toast(`Query ${name} dihentikan.`);
+    const r = await api(`/admin/users/${id}/stop-queries`, { method: 'POST' });
+    toast(`${r.stopped} query milik ${name} dihentikan.`);
     loadAdminStats();
   } catch (e) { toast(e.message, true); }
 }
@@ -543,7 +543,6 @@ async function loadAdminUsers() {
         <div class="row-actions">
           <button type="button" class="btn btn-sm btn-primary" data-act="save-user" data-id="${u.id}">Simpan</button>
           <button type="button" class="btn btn-sm ${u.is_suspended ? 'btn-primary' : 'btn-warning'}" data-act="suspend-user" data-id="${u.id}">${u.is_suspended ? 'Aktifkan' : 'Suspend'}</button>
-          <button type="button" class="btn btn-sm btn-danger" data-act="stop-queries" data-id="${u.id}">Stop Query</button>
           <button type="button" class="btn btn-sm btn-danger" data-act="del-user" data-id="${u.id}" data-name="${esc(u.username)}">Hapus user</button>
         </div>`}
       </div>`).join('');
