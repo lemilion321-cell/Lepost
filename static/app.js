@@ -145,7 +145,6 @@ async function api(path, opts = {}) {
     throw new Error('Tidak bisa terhubung ke server.');
   }
   if (r.status === 401 && path !== '/login') { logout(); throw new Error('Sesi habis, login lagi.'); }
-  if (r.status === 403 && path === '/me') { logout(); throw new Error('Akun Anda telah disuspend.'); }
   const txt = await r.text();
   let data = {};
   try { data = txt ? JSON.parse(txt) : {}; } catch { data = { raw: txt }; }
