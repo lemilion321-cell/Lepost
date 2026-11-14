@@ -402,6 +402,8 @@ def login(inp: LoginIn, db: Session = Depends(get_db)):
 @router.get("/me")
 def me(user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Profil user saat ini termasuk sisa masa aktif dan limit."""
+    if user.is_suspended:
+        raise HTTPException(403, "Akun kamu disuspend. Hubungi admin.")
     return _user_out(user, db)
 
 
