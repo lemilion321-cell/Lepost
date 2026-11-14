@@ -837,6 +837,8 @@ def admin_del_user(uid: int, user: User = Depends(current_user), db: Session = D
     accs = db.query(Account).filter_by(owner_id=uid).all()
     for a in accs:
         db.delete(a)
+    # lepas referensi user di tabel licenses (used_by FK)
+    db.query(License).filter_by(used_by=uid).update({"used_by": None, "used_at": None})
     # hapus lisensi
     for ul in db.query(UserLicense).filter_by(user_id=uid).all():
         db.delete(ul)
