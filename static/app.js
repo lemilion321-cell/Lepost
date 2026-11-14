@@ -1759,6 +1759,16 @@ async function boot() {
   try { state.me = await api('/me'); } catch { return; }
   renderMe();
   if (!state.me.is_admin) {
+    // Blokir semua kalau suspended
+    if (state.me.is_suspended) {
+      const main = $('main');
+      if (main) main.innerHTML =
+        '<div class="notice exp-banner" style="border-color:#ef4444">' +
+        '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
+        '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
+        '</div>';
+      return;
+    }
     // hide tab Bypass kalau tidak allow_bypass
     const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
     if (tabBypass) tabBypass.hidden = !state.me.allow_bypass;
