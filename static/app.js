@@ -1762,14 +1762,7 @@ async function boot() {
   if (!state.me.is_admin) {
     // Blokir semua kalau suspended
     if (state.me.is_suspended) {
-      const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
-      if (tabBypass) tabBypass.hidden = true;
-      const main = $('main');
-      if (main) main.innerHTML =
-        '<div class="notice exp-banner" style="border-color:#ef4444">' +
-        '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
-        '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
-        '</div>';
+      logout();
       return;
     }
     // hide tab Bypass kalau tidak allow_bypass
@@ -1803,12 +1796,7 @@ async function boot() {
     if (m.is_suspended) {
       clearInterval(state.refreshTimer);
       clearInterval(state.countdownTimer);
-      const main = $('main');
-      if (main) main.innerHTML =
-        '<div class="notice exp-banner" style="border-color:#ef4444">' +
-        '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
-        '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
-        '</div>';
+      logout();
       return;
     }
     // Lisensi baru saja habis saat user sedang aktif pakai — tampilkan layar expired
