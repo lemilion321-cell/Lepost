@@ -487,7 +487,7 @@ async function loadAdminKeys() {
             <p class="acc-meta">${k.days} hari · akun ${lim(k.max_accounts)} · channel ${lim(k.max_channels)}${k.allow_bypass ? ' · <b>Bypass</b>' : ''}${k.allow_dashboard ? ' · <b>Dashboard</b>' : ''}${k.note ? ' · ' + esc(k.note) : ''}${k.used_by ? ' · oleh ' + esc(k.used_by) : ''}</p>
             <div class="row-actions">
               <button type="button" class="btn btn-sm" data-act="copy-key" data-key="${esc(k.key)}">Salin</button>
-              ${k.used_by ? '' : `<button type="button" class="btn btn-sm btn-danger" data-act="del-key" data-id="${k.id}">Hapus</button>`}
+              ${k.used_by ? `<button type="button" class="btn btn-sm btn-danger" data-act="revoke-key" data-id="${k.id}">Revoke</button>` : `<button type="button" class="btn btn-sm btn-danger" data-act="del-key" data-id="${k.id}">Hapus</button>`}
             </div>
           </div>`).join('')
       : '<p class="hint">Belum ada key.</p>';
@@ -526,7 +526,7 @@ async function loadAdminUsers() {
       <div class="acc-row col" data-uid="${u.id}">
         <div class="row-top">
           <p class="acc-name">${esc(u.username)}</p>
-          <span class="badge ${u.is_admin ? 'badge-adm' : u.expired ? 'badge-bad' : 'badge-ok'}">${u.is_admin ? 'Admin' : u.expired ? 'Habis' : 'Aktif'}</span>
+          <span class="badge ${u.is_admin ? 'badge-adm' : u.is_suspended ? 'badge-bad' : u.expired ? 'badge-bad' : 'badge-ok'}">${u.is_admin ? 'Admin' : u.is_suspended ? 'Suspended' : u.expired ? 'Habis' : 'Aktif'}</span>
         </div>
         <p class="acc-meta">${u.is_admin ? 'Tanpa batas' : `Sisa ${esc(fmtLeft(u.seconds_left))} (s/d ${fmtDate(u.expires_at)})`} · akun ${u.accounts}/${lim(u.max_accounts)} · channel ${u.channels}/${lim(u.max_channels)}</p>
         ${u.is_admin ? '' : `
@@ -542,6 +542,7 @@ async function loadAdminUsers() {
         </div>
         <div class="row-actions">
           <button type="button" class="btn btn-sm btn-primary" data-act="save-user" data-id="${u.id}">Simpan</button>
+          <button type="button" class="btn btn-sm ${u.is_suspended ? 'btn-primary' : 'btn-warning'}" data-act="suspend-user" data-id="${u.id}">${u.is_suspended ? 'Aktifkan' : 'Suspend'}</button>
           <button type="button" class="btn btn-sm btn-danger" data-act="del-user" data-id="${u.id}" data-name="${esc(u.username)}">Hapus user</button>
         </div>`}
       </div>`).join('');
@@ -570,9 +571,28 @@ async function saveUser(id, el) {
   finally { setBusy(el, false); }
 }
 
+async function suspendUser(id, el) {
+  const isSuspended = el.textContent.trim() === 'Suspend';
+  const label = isSuspended ? 'Suspend' : 'Aktifkan';
+  if (!(await ask(label + ' user?', isSuspended ? 'User tidak bisa login dan semua query-nya akan berhenti.' : 'User bisa login kembali.', label))) return;
+  setBusy(el, true);
+  try {
+    await api('/admin/users/' + id + '/suspend', { method: 'POST' });
+    toast('User ' + (isSuspended ? 'disuspend.' : 'diaktifkan.'));
+    loadAdminUsers();
+  } catch (e) { toast(e.message, true); }
+  finally { setBusy(el, false); }
+}
+
 async function delUser(id, name) {
   if (!(await ask('Hapus user?', `User "${name}" beserta akun & query-nya akan dihapus permanen.`, 'Hapus'))) return;
   try { await api(`/admin/users/${id}`, { method: 'DELETE' }); toast('User dihapus.'); loadAdminUsers(); }
+  catch (e) { toast(e.message, true); }
+}
+
+async function revokeKey(id) {
+  if (!(await ask('Revoke key?', 'Key akan dihapus dan lisensi user yang memakai key ini akan dicabut.', 'Revoke'))) return;
+  try { await api('/admin/keys/' + id, { method: 'DELETE' }); toast('Key direvoke.'); loadAdminKeys(); loadAdminUsers(); }
   catch (e) { toast(e.message, true); }
 }
 
@@ -1665,8 +1685,10 @@ document.addEventListener('click', e => {
     case 'open-lic':         return openLicense(el);
     case 'copy-key':         return copyText(el.dataset.key);
     case 'del-key':          return delKey(id);
+    case 'revoke-key':       return revokeKey(id);
     case 'save-user':        return saveUser(id, el);
     case 'del-user':         return delUser(id, el.dataset.name);
+    case 'suspend-user':     return suspendUser(id, el);
     case 'refresh':          return refreshNow();
     case 'toggle':           return toggleQ(id, el.dataset.status, el);
     case 'edit':             return editQ(id);

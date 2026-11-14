@@ -250,6 +250,7 @@ def _user_out(u: User, db: Session) -> dict:
         "allow_dashboard": ul.allow_dashboard if ul else False,
         "accounts": _user_account_count(db, u.id),
         "channels": _user_channel_count(db, u.id),
+        "is_suspended": u.is_suspended,
     }
 
 
@@ -393,6 +394,8 @@ def login(inp: LoginIn, db: Session = Depends(get_db)):
     u = db.query(User).filter_by(username=inp.username).first()
     if not u or not verify_pw(inp.password, u.password_hash):
         raise HTTPException(401, "Username / password salah")
+    if u.is_suspended:
+        raise HTTPException(403, "Akun kamu disuspend. Hubungi admin.")
     return {"token": make_token(u)}
 
 
@@ -883,6 +886,40 @@ def admin_stop_all(user: User = Depends(current_user), db: Session = Depends(get
     db.commit()
     return {"ok": True, "stopped": n}
 
+
+
+@router.post("/admin/users/{uid}/suspend")
+def admin_suspend_user(uid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Suspend / unsuspend user."""
+    _require_admin(user)
+    target = db.get(User, uid)
+    if not target:
+        raise HTTPException(404, "User tidak ditemukan")
+    if target.is_admin:
+        raise HTTPException(400, "Tidak bisa suspend admin")
+    target.is_suspended = not target.is_suspended
+    if target.is_suspended:
+        owned = _owned_ids(db, target)
+        for q in db.query(Query).filter_by(status="active").all():
+            if _q_acc_ids(q) & owned:
+                q.status = "stopped"
+    db.commit()
+    return {"ok": True, "is_suspended": target.is_suspended}
+
+
+@router.delete("/admin/keys/{kid}")
+def admin_revoke_key(kid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Revoke / hapus key lisensi."""
+    _require_admin(user)
+    lic = db.get(License, kid)
+    if not lic:
+        raise HTTPException(404, "Key tidak ditemukan")
+    if lic.used_by:
+        db.query(UserLicense).filter_by(user_id=lic.used_by).delete()
+        db.flush()
+    db.delete(lic)
+    db.commit()
+    return {"ok": True}
 
 # ─────────────────────────── admin: broadcast ───────────────────────────
 @router.get("/admin/broadcast")

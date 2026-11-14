@@ -52,6 +52,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_suspended: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Account(Base):
@@ -110,6 +111,12 @@ def _migrate():
         if "guild_id" not in cols:
             with engine.begin() as con:
                 con.execute(text("ALTER TABLE queries ADD COLUMN guild_id VARCHAR(32) NOT NULL DEFAULT ''"))
+
+    if "users" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("users")}
+        if "is_suspended" not in cols:
+            with engine.begin() as con:
+                con.execute(text("ALTER TABLE users ADD COLUMN is_suspended BOOLEAN NOT NULL DEFAULT FALSE"))
 
     if "licenses" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("licenses")}
