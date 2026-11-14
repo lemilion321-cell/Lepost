@@ -1728,6 +1728,16 @@ async function boot() {
   if (!TABS.includes(location.hash.replace('#', ''))) history.replaceState(null, '', '#dashboard');
   try { state.me = await api('/me'); } catch { return; }
   renderMe();
+  if (!state.me.is_admin) {
+    // hide tab Bypass kalau tidak allow_bypass
+    const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
+    if (tabBypass) tabBypass.hidden = !state.me.allow_bypass;
+    // hide statistik & grafik kalau tidak allow_dashboard
+    const elStats = document.querySelector('.stats');
+    const elChart = document.querySelector('#chart')?.closest('.panel');
+    if (elStats) elStats.hidden = !state.me.allow_dashboard;
+    if (elChart) elChart.hidden = !state.me.allow_dashboard;
+  }
   if (state.me && state.me.expired) {
     const main = $('main');
     if (main) main.innerHTML =

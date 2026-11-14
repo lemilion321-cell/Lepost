@@ -246,6 +246,8 @@ def _user_out(u: User, db: Session) -> dict:
         "expires_at": _iso(ul.expires_at) if ul else None,
         "max_accounts": ul.max_accounts if ul else 1,
         "max_channels": ul.max_channels if ul else 5,
+        "allow_bypass": ul.allow_bypass if ul else False,
+        "allow_dashboard": ul.allow_dashboard if ul else False,
         "accounts": _user_account_count(db, u.id),
         "channels": _user_channel_count(db, u.id),
     }
