@@ -38,5 +38,6 @@ HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", "8000"))
 
 import base64, hashlib
-_key_bytes = hashlib.sha256(SECRET.encode()).digest()
+TOKEN_ENC_SECRET = os.getenv("TOKEN_ENC_SECRET", SECRET)
+_key_bytes = hashlib.sha256(TOKEN_ENC_SECRET.encode()).digest()
 TOKEN_ENC_KEY: bytes = base64.urlsafe_b64encode(_key_bytes)
