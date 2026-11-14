@@ -98,6 +98,8 @@ class UserLicense(Base):
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     max_accounts: Mapped[int] = mapped_column(Integer, default=1)
     max_channels: Mapped[int] = mapped_column(Integer, default=5)
+    allow_bypass: Mapped[bool] = mapped_column(Boolean, default=False)
+    allow_dashboard: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 def _migrate():
@@ -108,6 +110,14 @@ def _migrate():
         if "guild_id" not in cols:
             with engine.begin() as con:
                 con.execute(text("ALTER TABLE queries ADD COLUMN guild_id VARCHAR(32) NOT NULL DEFAULT ''"))
+
+    if "user_licenses" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("user_licenses")}
+        with engine.begin() as con:
+            if "allow_bypass" not in cols:
+                con.execute(text("ALTER TABLE user_licenses ADD COLUMN allow_bypass BOOLEAN NOT NULL DEFAULT FALSE"))
+            if "allow_dashboard" not in cols:
+                con.execute(text("ALTER TABLE user_licenses ADD COLUMN allow_dashboard BOOLEAN NOT NULL DEFAULT FALSE"))
 
 
 def init_db():

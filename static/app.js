@@ -484,7 +484,7 @@ async function loadAdminKeys() {
               <p class="acc-name key-code">${esc(k.key)}</p>
               <span class="badge ${k.used_by ? 'badge-bad' : 'badge-ok'}">${k.used_by ? 'Terpakai' : 'Tersedia'}</span>
             </div>
-            <p class="acc-meta">${k.days} hari · akun ${lim(k.max_accounts)} · channel ${lim(k.max_channels)}${k.note ? ' · ' + esc(k.note) : ''}${k.used_by ? ' · oleh ' + esc(k.used_by) : ''}</p>
+            <p class="acc-meta">${k.days} hari · akun ${lim(k.max_accounts)} · channel ${lim(k.max_channels)}${k.allow_bypass ? ' · <b>Bypass</b>' : ''}${k.allow_dashboard ? ' · <b>Dashboard</b>' : ''}${k.note ? ' · ' + esc(k.note) : ''}${k.used_by ? ' · oleh ' + esc(k.used_by) : ''}</p>
             <div class="row-actions">
               <button type="button" class="btn btn-sm" data-act="copy-key" data-key="${esc(k.key)}">Salin</button>
               ${k.used_by ? '' : `<button type="button" class="btn btn-sm btn-danger" data-act="del-key" data-id="${k.id}">Hapus</button>`}
@@ -501,6 +501,8 @@ async function submitKey(e) {
     days: num('key-days', 30), count: num('key-count', 1),
     max_accounts: num('key-acc', 1), max_channels: num('key-ch', 1),
     note: $('key-note').value.trim(),
+    allow_bypass: $('key-bypass')?.checked ?? false,
+    allow_dashboard: $('key-dashboard')?.checked ?? false,
   };
   const btn = e.submitter || e.target.querySelector('[type=submit]');
   setBusy(btn, true);

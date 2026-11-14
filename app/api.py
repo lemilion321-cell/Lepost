@@ -51,6 +51,8 @@ class License(Base):
     days = Column(Integer, default=30)
     max_accounts = Column(Integer, default=1)   # 0 = tidak terbatas
     max_channels = Column(Integer, default=5)   # 0 = tidak terbatas
+    allow_bypass = Column(Boolean, default=False)
+    allow_dashboard = Column(Boolean, default=False)
     note = Column(String(64), default="")
     used_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     used_at = Column(DateTime, nullable=True)
@@ -310,6 +312,8 @@ class KeyIn(BaseModel):
     count: int = Field(default=1, ge=1, le=100)
     max_accounts: int = Field(default=1, ge=0)
     max_channels: int = Field(default=5, ge=0)
+    allow_bypass: bool = False
+    allow_dashboard: bool = False
     note: str = Field(default="", max_length=64)
 
 
@@ -318,6 +322,8 @@ class UserPatch(BaseModel):
     new_password: Optional[str] = Field(default=None, min_length=6)
     max_accounts: Optional[int] = Field(default=None, ge=0)
     max_channels: Optional[int] = Field(default=None, ge=0)
+    allow_bypass: Optional[bool] = None
+    allow_dashboard: Optional[bool] = None
 
 
 class BroadcastIn(BaseModel):
@@ -373,6 +379,8 @@ def signup(inp: SignupIn, db: Session = Depends(get_db)):
         expires_at=utcnow() + timedelta(days=lic.days),
         max_accounts=lic.max_accounts,
         max_channels=lic.max_channels,
+        allow_bypass=lic.allow_bypass,
+        allow_dashboard=lic.allow_dashboard,
     ))
     db.commit()
     return {"token": make_token(u)}
@@ -415,7 +423,7 @@ def redeem(inp: RedeemIn, user: User = Depends(current_user), db: Session = Depe
     else:
         db.add(UserLicense(
             user_id=user.id, expires_at=new_exp,
-            max_accounts=lic.max_accounts, max_channels=lic.max_channels,
+            max_accounts=lic.max_accounts, max_channels=lic.max_channels, allow_bypass=lic.allow_bypass, allow_dashboard=lic.allow_dashboard,
         ))
     lic.used_by = user.id
     lic.used_at = now
@@ -743,6 +751,8 @@ def admin_create_keys(inp: KeyIn, user: User = Depends(current_user), db: Sessio
             key=k, days=inp.days,
             max_accounts=inp.max_accounts, max_channels=inp.max_channels,
             note=inp.note.strip(),
+            allow_bypass=inp.allow_bypass,
+            allow_dashboard=inp.allow_dashboard,
         )
         db.add(lic)
         created.append(k)
