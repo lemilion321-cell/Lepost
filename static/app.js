@@ -1787,6 +1787,18 @@ async function boot() {
     const wasExpired = state.me?.expired;
     state.me = m;
     renderMe();
+    // Akun baru saja di-suspend saat user sedang aktif
+    if (m.is_suspended) {
+      clearInterval(state.refreshTimer);
+      clearInterval(state.countdownTimer);
+      const main = $('main');
+      if (main) main.innerHTML =
+        '<div class="notice exp-banner" style="border-color:#ef4444">' +
+        '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
+        '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
+        '</div>';
+      return;
+    }
     // Lisensi baru saja habis saat user sedang aktif pakai — tampilkan layar expired
     if (m.expired && !wasExpired) {
       clearInterval(state.refreshTimer);
