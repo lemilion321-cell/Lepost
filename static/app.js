@@ -536,6 +536,10 @@ async function loadAdminUsers() {
           <input class="input" data-f="acc" type="number" min="0" inputmode="numeric" placeholder="Limit akun (${lim(u.max_accounts)})" aria-label="Limit akun">
           <input class="input" data-f="ch" type="number" min="0" inputmode="numeric" placeholder="Limit channel (${lim(u.max_channels)})" aria-label="Limit channel">
         </div>
+        <div class="two-col" style="margin-top:4px">
+          <label class="label"><input type="checkbox" data-f="bypass" ${u.allow_bypass ? 'checked' : ''}> Allow Bypass</label>
+          <label class="label"><input type="checkbox" data-f="dashboard" ${u.allow_dashboard ? 'checked' : ''}> Allow Dashboard</label>
+        </div>
         <div class="row-actions">
           <button type="button" class="btn btn-sm btn-primary" data-act="save-user" data-id="${u.id}">Simpan</button>
           <button type="button" class="btn btn-sm btn-danger" data-act="del-user" data-id="${u.id}" data-name="${esc(u.username)}">Hapus user</button>
@@ -552,6 +556,10 @@ async function saveUser(id, el) {
   if (v('acc')  !== '') body.max_accounts = parseInt(v('acc'), 10);
   if (v('ch')   !== '') body.max_channels  = parseInt(v('ch'), 10);
   if (v('pw')   !== '') body.new_password  = v('pw');
+  const chkBypass = row.querySelector('[data-f="bypass"]');
+  const chkDash = row.querySelector('[data-f="dashboard"]');
+  if (chkBypass) body.allow_bypass = chkBypass.checked;
+  if (chkDash) body.allow_dashboard = chkDash.checked;
   if (!Object.keys(body).length) return toast('Isi minimal satu kolom dulu.', true);
   setBusy(el, true);
   try {

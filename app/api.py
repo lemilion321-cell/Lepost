@@ -805,11 +805,18 @@ def admin_patch_user(uid: int, inp: UserPatch, user: User = Depends(current_user
     if ul is None and (inp.max_accounts is not None or inp.max_channels is not None):
         ul = UserLicense(user_id=uid, expires_at=None)
         db.add(ul)
+    if ul is None and (inp.allow_bypass is not None or inp.allow_dashboard is not None):
+        ul = UserLicense(user_id=uid, expires_at=None)
+        db.add(ul)
     if ul:
         if inp.max_accounts is not None:
             ul.max_accounts = inp.max_accounts
         if inp.max_channels is not None:
             ul.max_channels = inp.max_channels
+        if inp.allow_bypass is not None:
+            ul.allow_bypass = inp.allow_bypass
+        if inp.allow_dashboard is not None:
+            ul.allow_dashboard = inp.allow_dashboard
     db.commit()
     return {"ok": True}
 
