@@ -74,8 +74,6 @@ def _ensure_extra_tables():
     ])
 
 
-# panggil sekali saat module diimport
-_ensure_extra_tables()
 
 
 # ─────────────────────────── helpers ───────────────────────────

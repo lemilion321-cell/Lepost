@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import router
+from app.api import router, _ensure_extra_tables
 from app.auth import hash_pw
 from app.models import init_db, SessionLocal, User, Query, Log, utcnow
 from app.worker import run_query_loop
@@ -62,6 +62,7 @@ async def manager_loop(app: FastAPI):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    _ensure_extra_tables()
     db = SessionLocal()
     try:
         if not db.query(User).filter_by(username="admin").first():
