@@ -840,6 +840,7 @@ def admin_del_user(uid: int, user: User = Depends(current_user), db: Session = D
     # hapus lisensi
     for ul in db.query(UserLicense).filter_by(user_id=uid).all():
         db.delete(ul)
+    db.flush()
     # hapus user
     db.delete(target)
     db.commit()
