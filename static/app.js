@@ -663,7 +663,6 @@ const currentRoute = () => {
   return TABS.includes(h) ? h : 'dashboard';
 };
 function showTab(tab) {
-  if (state.me && state.me.is_suspended) return;
   document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== tab; });
   document.querySelectorAll('[data-tab]').forEach(a => {
     const on = a.dataset.tab === tab;
@@ -1762,17 +1761,37 @@ async function boot() {
   if (!state.me.is_admin) {
     // Blokir semua kalau suspended
     if (state.me.is_suspended) {
-      logout();
+      const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
+      if (tabBypass) tabBypass.hidden = true;
+      const main = $('main');
+      if (main) main.innerHTML =
+        '<div class="notice exp-banner" style="border-color:#ef4444">' +
+        '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
+        '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
+        '</div>';
       return;
     }
-    // hide tab Bypass kalau tidak allow_bypass
-    const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
-    if (tabBypass) tabBypass.hidden = !state.me.allow_bypass;
-    // hide statistik & grafik kalau tidak allow_dashboard
-    const elStats = document.querySelector('.stats');
-    const elChart = document.querySelector('#chart')?.closest('.panel');
-    if (elStats) elStats.hidden = !state.me.allow_dashboard;
-    if (elChart) elChart.hidden = !state.me.allow_dashboard;
+    // Bypass: tab tetap muncul, lock konten kalau tidak allow
+    if (!state.me.allow_bypass) {
+      const sec = document.querySelector('[data-view="bypass"]');
+      if (sec) sec.innerHTML =
+        '<div class="notice exp-banner" style="margin:24px 16px;border-color:#f59e0b">' +
+        '<p class="notice-title" style="color:#f59e0b">Fitur Terkunci</p>' +
+        '<p class="notice-msg">Fitur Bypass belum aktif. Hubungi owner untuk upgrade.</p>' +
+        '</div>';
+    }
+    // Dashboard stats: lock kalau tidak allow_dashboard
+    if (!state.me.allow_dashboard) {
+      const elStats = document.querySelector('.stats');
+      const elChart = document.querySelector('#chart')?.closest('.panel');
+      const lockHtml =
+        '<div class="notice exp-banner" style="margin:8px 0;border-color:#f59e0b">' +
+        '<p class="notice-title" style="color:#f59e0b">Fitur Terkunci</p>' +
+        '<p class="notice-msg">Statistik belum aktif. Hubungi owner untuk upgrade.</p>' +
+        '</div>';
+      if (elStats) elStats.innerHTML = lockHtml;
+      if (elChart) elChart.innerHTML = lockHtml;
+    }
   }
   if (state.me && state.me.expired) {
     const main = $('main');
@@ -1796,7 +1815,12 @@ async function boot() {
     if (m.is_suspended) {
       clearInterval(state.refreshTimer);
       clearInterval(state.countdownTimer);
-      logout();
+      const main = $('main');
+      if (main) main.innerHTML =
+        '<div class="notice exp-banner" style="border-color:#ef4444">' +
+        '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
+        '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
+        '</div>';
       return;
     }
     // Lisensi baru saja habis saat user sedang aktif pakai — tampilkan layar expired
