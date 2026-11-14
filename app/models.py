@@ -111,13 +111,13 @@ def _migrate():
             with engine.begin() as con:
                 con.execute(text("ALTER TABLE queries ADD COLUMN guild_id VARCHAR(32) NOT NULL DEFAULT ''"))
 
-    if "user_licenses" in insp.get_table_names():
-        cols = {c["name"] for c in insp.get_columns("user_licenses")}
+    if "licenses" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("licenses")}
         with engine.begin() as con:
             if "allow_bypass" not in cols:
-                con.execute(text("ALTER TABLE user_licenses ADD COLUMN allow_bypass BOOLEAN NOT NULL DEFAULT FALSE"))
+                con.execute(text("ALTER TABLE licenses ADD COLUMN allow_bypass BOOLEAN NOT NULL DEFAULT FALSE"))
             if "allow_dashboard" not in cols:
-                con.execute(text("ALTER TABLE user_licenses ADD COLUMN allow_dashboard BOOLEAN NOT NULL DEFAULT FALSE"))
+                con.execute(text("ALTER TABLE licenses ADD COLUMN allow_dashboard BOOLEAN NOT NULL DEFAULT FALSE"))
 
 
 def init_db():
