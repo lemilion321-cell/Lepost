@@ -819,7 +819,7 @@ button.pill { cursor: pointer; font: inherit; }
 .sec-head-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end;
   gap: .5rem;
   margin-bottom: .5rem;
 }
