@@ -137,7 +137,6 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def check_ip_blacklist(request, call_next):
     from app.api import _blacklist_cache, _blacklist_loaded, _load_blacklist
-    from app.database import SessionLocal
     ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
     if not _blacklist_loaded:
         db = SessionLocal()
