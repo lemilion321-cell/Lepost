@@ -137,8 +137,11 @@ async def _validate_token(acc: dict, qid: int) -> bool:
             code = res.get("error")
             msg = res.get("message", "")
             if code == 401:
-                _log(qid, "ERROR", f"[{acc['label']}] Token tidak valid (401 Unauthorized). Ganti token akun ini lewat menu Akun → Edit Token.")
+                _log(qid, "ERROR", f"[{acc['label']}] Token tidak valid (401). Query dihentikan otomatis. Ganti token lewat menu Akun → Edit Token.")
+                return "INVALID_TOKEN"
             elif code == 403:
+                _log(qid, "ERROR", f"[{acc['label']}] Token diblokir (403). Query dihentikan otomatis. Ganti token lewat menu Akun → Edit Token.")
+                return "INVALID_TOKEN"
                 _log(qid, "ERROR", f"[{acc['label']}] Token diblokir / akses ditolak (403). Ganti token akun.")
             elif code == 429:
                 retry = res.get("message", "")
@@ -316,6 +319,17 @@ async def run_query_loop(q_id: int):
                 return
 
             attempted = await _post_once(cfg, turn)
+            if attempted == "INVALID_TOKEN":
+                db = SessionLocal()
+                try:
+                    q = db.get(Query, q_id)
+                    if q:
+                        q.status = "stopped"
+                        db.commit()
+                finally:
+                    db.close()
+                _log(q_id, "INFO", "Query dihentikan otomatis karena token tidak valid.")
+                return
             # Bug fix: turn hanya naik kalau benar-benar attempt kirim pesan
             # (bukan skip karena akun hilang), supaya giliran akun tidak melompat
             if attempted:
