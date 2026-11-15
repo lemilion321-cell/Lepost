@@ -1589,6 +1589,21 @@ function cardHtml(q, n) {
   </article>`;
 }
 
+function renderQueryFilter(auto) {
+  const box = $('filter-auto');
+  if (!box) return;
+  const accMap = {};
+  auto.forEach(q => {
+    const acc = q.bypass_data?.[0];
+    if (acc) accMap[String(acc.account_id)] = acc.label || ('Akun ' + acc.account_id);
+  });
+  const ids = Object.keys(accMap);
+  if (ids.length < 2) { box.innerHTML = ''; return; }
+  const cur = state.filterAcc || 'all';
+  box.innerHTML = `<button class="acc-pill${cur==='all'?' active':''}" data-filter-acc="all">Semua</button>`
+    + ids.map(id => `<button class="acc-pill${cur===id?' active':''}" data-filter-acc="${id}">${accMap[id]}</button>`).join('');
+}
+
 function renderQueries(list) {
   const auto   = list.filter(q => q.query_type === 'auto');
   const bypass = list.filter(q => q.query_type === 'bypass');
@@ -1601,15 +1616,22 @@ function renderQueries(list) {
   setText('count-bypass', countLabel(bypass));
   toggleBtn('btn-toggle-auto',   state.isAutoAll);
   toggleBtn('btn-toggle-bypass', state.isBypassAll);
+  renderQueryFilter(auto);
+  const filteredAuto = state.filterAcc && state.filterAcc !== 'all'
+    ? auto.filter(q => String(q.bypass_data?.[0]?.account_id) === state.filterAcc)
+    : auto;
   const autoBox = $('q-list-auto');
-  if (autoBox) autoBox.innerHTML = auto.length
-    ? auto.map(q => cardHtml(q, num[q.id])).join('')
-    : emptyBlock('Belum ada Auto Post', 'Buat post otomatis pertama. Pesan dikirim berkala ke channel yang kamu pilih.', 'new-post', '+ Tambah Post');
+  if (autoBox) autoBox.innerHTML = filteredAuto.length
+    ? filteredAuto.map(q => cardHtml(q, num[q.id])).join('')
+    : auto.length
+      ? '<p class="hint" style="padding:1rem">Tidak ada query untuk akun ini.</p>'
+      : emptyBlock('Belum ada Auto Post', 'Buat post otomatis pertama. Pesan dikirim berkala ke channel yang kamu pilih.', 'new-post', '+ Tambah Post');
   const bypassBox = $('q-list-bypass');
   if (bypassBox) bypassBox.innerHTML = bypass.length
     ? bypass.map(q => cardHtml(q, num[q.id])).join('')
     : emptyBlock('Belum ada Bypass', 'Gabungkan minimal dua akun untuk posting bergiliran di satu channel.', 'new-bypass', '+ Tambah Bypass');
 }
+
 
 async function loadQueries() {
   const boxes = [$('q-list-auto'), $('q-list-bypass')];
@@ -1756,6 +1778,13 @@ function exportLogs() {
 
 /* ───────── event delegation ───────── */
 document.addEventListener('click', e => {
+  // Filter akun pills
+  const pill = e.target.closest('[data-filter-acc]');
+  if (pill) {
+    state.filterAcc = pill.dataset.filterAcc;
+    renderQueries(state.queries || []);
+    return;
+  }
   const el = e.target.closest('[data-act]');
   if (!el || el.disabled) return;
   const id = Number(el.dataset.id);
