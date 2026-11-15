@@ -146,7 +146,6 @@ async def _validate_token(acc: dict, qid: int) -> bool:
                 _log(qid, "ERROR", f"[{acc['label']}] Validasi token gagal ({code}): {msg}")
             return False
         username = res.get("username", acc["user"])
-        _log(qid, "INFO", f"[{acc['label']}] Token valid, login sebagai @{username}. Worker mulai.")
         return True
     except asyncio.CancelledError:
         raise
