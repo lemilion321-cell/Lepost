@@ -7,9 +7,9 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import router, _ensure_extra_tables
+from app.api import router, _ensure_extra_tables, UserBroadcast
 from app.auth import hash_pw
-from app.models import init_db, SessionLocal, User, Query, Log, utcnow
+from app.models import init_db, SessionLocal, User, Query, Log, UserLicense, utcnow
 from app.worker import run_query_loop
 from config import BASE_DIR, ADMIN_PASSWORD
 
@@ -29,6 +29,51 @@ def _prune_logs():
         db.rollback()
     finally:
         db.close()
+
+
+
+THREE_DAYS = 3 * 24 * 3600  # detik
+
+
+async def expiry_notify_loop():
+    """Tiap 1 jam cek user yang lisensinya <= 3 hari -> buat UserBroadcast kalau belum ada."""
+    while True:
+        await asyncio.sleep(3600)  # tunggu 1 jam pertama biar startup bersih
+        db = SessionLocal()
+        try:
+            from app.models import utcnow as _utcnow
+            now = _utcnow()
+            # Ambil semua user_licenses yang hampir habis
+            uls = db.query(UserLicense).filter(
+                UserLicense.expires_at.isnot(None)
+            ).all()
+            for ul in uls:
+                secs = (ul.expires_at - now).total_seconds()
+                if secs <= 0 or secs > THREE_DAYS:
+                    continue
+                days_left = int(secs // 86400) + 1
+                # Cek sudah ada notif aktif belum
+                existing = db.query(UserBroadcast).filter_by(
+                    user_id=ul.user_id, dismissed=False
+                ).first()
+                if existing:
+                    continue
+                msg = (
+                    f"⚠️ Lisensi kamu akan habis dalam {days_left} hari! "
+                    f"Segera perpanjang agar akun tetap aktif."
+                )
+                db.add(UserBroadcast(
+                    user_id=ul.user_id,
+                    message=msg,
+                    type="warn",
+                ))
+            db.commit()
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("expiry_notify_loop error")
+        finally:
+            db.close()
 
 
 async def manager_loop(app: FastAPI):
@@ -75,13 +120,15 @@ async def lifespan(app: FastAPI):
 
     app.state.tasks = {}
     m_task = asyncio.create_task(manager_loop(app))
+    n_task = asyncio.create_task(expiry_notify_loop())
     try:
         yield
     finally:
         m_task.cancel()
+        n_task.cancel()
         for t in app.state.tasks.values():
             t.cancel()
-        await asyncio.gather(m_task, *app.state.tasks.values(), return_exceptions=True)
+        await asyncio.gather(m_task, n_task, *app.state.tasks.values(), return_exceptions=True)
 
 
 app = FastAPI(lifespan=lifespan)

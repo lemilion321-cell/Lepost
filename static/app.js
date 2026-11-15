@@ -329,10 +329,22 @@ async function loadBroadcastBanner() {
     banner.className = `notice ${cls}`;
     banner.setAttribute('role', 'alert');
     banner.style.cssText = 'margin:0 0 12px;border-radius:10px;';
-    banner.innerHTML = `<div><p class="notice-title">${bc.type === 'danger' ? 'Penting' : bc.type === 'warn' ? 'Perhatian' : 'Info'}</p><p class="notice-msg">${esc(bc.message)}</p></div>`;
+    // Kalau notif per-user, tampilkan tombol dismiss
+    const dismissBtn = bc.user_broadcast_id
+      ? `<button onclick="dismissUserBroadcast(${bc.user_broadcast_id})" style="margin-top:8px;padding:4px 12px;border:none;border-radius:6px;cursor:pointer;background:rgba(0,0,0,0.15);color:inherit;font-size:0.85em;">Tutup</button>`
+      : '';
+    banner.innerHTML = `<div><p class="notice-title">${bc.type === 'danger' ? 'Penting' : bc.type === 'warn' ? 'Perhatian' : 'Info'}</p><p class="notice-msg">${esc(bc.message)}</p>${dismissBtn}</div>`;
     const main = $('main');
     if (main) main.prepend(banner);
   } catch { /* broadcast optional, abaikan error */ }
+}
+
+async function dismissUserBroadcast(id) {
+  try {
+    await api(`/broadcast/dismiss/${id}`, { method: 'POST' });
+    const banner = document.getElementById('bc-banner');
+    if (banner) banner.remove();
+  } catch { /* abaikan */ }
 }
 
 /* ───────── panel admin ───────── */

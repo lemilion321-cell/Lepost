@@ -68,11 +68,24 @@ class Broadcast(Base):
     created_at = Column(DateTime, default=utcnow)
 
 
+
+
+class UserBroadcast(Base):
+    """Notif broadcast khusus per user (misal: H-3 lisensi habis)."""
+    __tablename__ = "user_broadcasts"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    message = Column(Text, default="")
+    type = Column(String(16), default="warn")  # info | warn | danger
+    created_at = Column(DateTime, default=utcnow)
+    dismissed = Column(Boolean, default=False)
+
 def _ensure_extra_tables():
     """Buat tabel extra kalau belum ada (safe, tidak drop tabel lama)."""
     Base.metadata.create_all(engine, tables=[
         License.__table__,
         Broadcast.__table__,
+        UserBroadcast.__table__,
     ])
 
 
@@ -967,8 +980,28 @@ def admin_del_broadcast(user: User = Depends(current_user), db: Session = Depend
 # ─────────────────────────── user: broadcast (baca saja) ───────────────────────────
 @router.get("/broadcast")
 def get_broadcast(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """User membaca broadcast aktif dari admin."""
+    """User membaca broadcast: user-specific dulu, fallback ke global."""
+    # Cek notif personal (belum di-dismiss)
+    ubc = (
+        db.query(UserBroadcast)
+        .filter_by(user_id=user.id, dismissed=False)
+        .order_by(UserBroadcast.id.desc())
+        .first()
+    )
+    if ubc:
+        return {"message": ubc.message, "type": ubc.type, "user_broadcast_id": ubc.id}
+    # Fallback ke broadcast global
     bc = db.query(Broadcast).order_by(Broadcast.id.desc()).first()
     if not bc:
         return {}
     return {"message": bc.message, "type": bc.type}
+
+
+@router.post("/broadcast/dismiss/{bc_id}")
+def dismiss_user_broadcast(bc_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """User dismiss notif personal (misal: notif H-3)."""
+    ubc = db.query(UserBroadcast).filter_by(id=bc_id, user_id=user.id).first()
+    if ubc:
+        ubc.dismissed = True
+        db.commit()
+    return {"ok": True}
