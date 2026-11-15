@@ -641,6 +641,11 @@ function initHeroCounters() {
 
 /* ───────── dialog ───────── */
 function openDialog(id, opener) {
+  // Kalau suspended, hanya boleh buka dialog lisensi & admin
+  if (state.me && state.me.is_suspended && id !== 'dlg-lic' && id !== 'dlg-admin' && id !== 'dlg-confirm') {
+    toast('Akun kamu disuspend. Hubungi owner.', true);
+    return;
+  }
   const d = $(id); if (!d) return;
   state.openers[id] = opener || document.activeElement;
   d.hidden = false;
