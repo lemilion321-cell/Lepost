@@ -3,7 +3,7 @@
    Perbaikan: /me, /public, /signup, /redeem, /admin/*, broadcast, grafik, undefined. */
 
 const API = '/api';
-const TABS = ['dashboard', 'posts', 'bypass', 'logs'];
+const TABS = ['dashboard', 'posts', 'bypass', 'logs', 'accounts', 'admin'];
 const REFRESH_MS = 10000;
 
 const state = {
@@ -380,7 +380,7 @@ function setAdminTab(tab) {
   else loadAdminKeys();
 }
 
-function openAdmin(opener) { openDialog('dlg-admin', opener); setAdminTab('keys'); }
+function openAdmin(opener) { location.hash = '#admin'; }
 
 const fmtDate = iso => iso
   ? new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -711,7 +711,7 @@ const currentRoute = () => {
   return TABS.includes(h) ? h : 'dashboard';
 };
 function showTab(tab) {
-  if (state.me && state.me.is_suspended) return;
+  if (state.me && state.me.is_suspended && tab !== 'accounts' && tab !== 'admin') return;
   document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== tab; });
   document.querySelectorAll('[data-tab]').forEach(a => {
     const on = a.dataset.tab === tab;
@@ -726,6 +726,8 @@ window.addEventListener('hashchange', () => { window.scrollTo(0, 0); showTab(cur
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
   if (tab === 'logs') return loadLogs();
+  if (tab === 'accounts') return renderAccountList();
+  if (tab === 'admin') { setAdminTab('keys'); return; }
   return loadQueries();
 }
 function refreshNow() {
@@ -1152,8 +1154,7 @@ async function submitEditToken(e) {
 }
 
 function openAccounts(opener) {
-  renderAccountList();
-  openDialog('dlg-acc', opener);
+  location.hash = '#accounts';
 }
 
 async function submitAccount(e) {

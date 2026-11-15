@@ -160,14 +160,14 @@
     </div>
     <nav class="sidebar-nav">
       <ul class="sidebar-list">
-        <li id="nav-admin" hidden><button type="button" class="sidebar-item nav-btn sidebar-item--admin" data-act="open-admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Admin</span></button></li>
+        <li id="nav-admin" hidden><a href="#admin" data-tab="admin" class="sidebar-item sidebar-item--admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Admin</span></a></li>
         <li id="nav-admin-divider" class="sidebar-divider" hidden></li>
         <li><a href="#dashboard" data-tab="dashboard" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></a></li>
         <li><a href="#posts" data-tab="posts" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg><span>Auto Post</span></a></li>
         <li><a href="#bypass" data-tab="bypass" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>Bypass</span></a></li>
         <li><a href="#logs" data-tab="logs" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Log</span></a></li>
         <li class="sidebar-divider"></li>
-        <li><button type="button" class="sidebar-item nav-btn" data-act="open-acc"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Akun</span></button></li>
+        <li><a href="#accounts" data-tab="accounts" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Akun</span></a></li>
       </ul>
     </nav>
     <div class="sidebar-footer">
@@ -287,7 +287,80 @@
       </div>
       <div id="log-body"></div>
     </section>
-  </main>
+  
+    <section data-view="accounts" aria-labelledby="accounts-title" hidden>
+      <div class="page-head"><h1 id="accounts-title" class="page-title">Kelola Akun</h1></div>
+      <div id="acc-list" class="acc-list"></div>
+      <form id="form-acc" class="acc-form">
+        <h3>Tambah akun baru</h3>
+        <div class="field"><label class="label" for="acc-label">Nama akun</label><input id="acc-label" class="input" autocomplete="off" placeholder="Contoh: akun utama"></div>
+        <div class="field"><label class="label" for="acc-token">Discord token</label><input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun"></div>
+        <div class="field"><label class="label" for="acc-proxy">Proxy (opsional)</label><input id="acc-proxy" class="input" autocomplete="off" placeholder="socks5://user:pass@host:port"></div>
+        <button type="submit" class="btn btn-primary btn-block">Simpan Akun</button>
+      </form>
+    </section>
+    <section data-view="admin" aria-labelledby="admin-title" hidden>
+      <div class="page-head"><h1 id="admin-title" class="page-title">Panel Admin</h1></div>
+      <div class="seg" role="group" aria-label="Menu admin" style="margin-bottom:16px">
+        <button type="button" data-atab="keys" aria-pressed="true">Key</button>
+        <button type="button" data-atab="users" aria-pressed="false">User</button>
+        <button type="button" data-atab="stats" aria-pressed="false">Statistik</button>
+        <button type="button" data-atab="broadcast" aria-pressed="false">Broadcast</button>
+        <button type="button" data-atab="blacklist" aria-pressed="false">Blacklist IP</button>
+      </div>
+      <div id="atab-keys">
+        <form id="form-key" class="acc-form" style="border-top:0;padding-top:0">
+          <h3>Buat key baru</h3>
+          <div class="two-col">
+            <div class="field"><label class="label" for="key-days">Durasi (hari)</label><input id="key-days" class="input" type="number" min="1" max="3650" value="30" inputmode="numeric"></div>
+            <div class="field"><label class="label" for="key-count">Jumlah key</label><input id="key-count" class="input" type="number" min="1" max="100" value="1" inputmode="numeric"></div>
+            <div class="field"><label class="label" for="key-acc">Limit akun</label><input id="key-acc" class="input" type="number" min="0" value="1" inputmode="numeric"></div>
+            <div class="field"><label class="label" for="key-ch">Limit channel</label><input id="key-ch" class="input" type="number" min="0" value="5" inputmode="numeric"></div>
+          </div>
+          <div class="field"><label class="label" for="key-note">Catatan (opsional)</label><input id="key-note" class="input" maxlength="64" autocomplete="off"></div>
+          <p class="hint">Isi 0 di limit = tanpa batas.</p>
+          <div class="two-col">
+            <div class="field"><label class="label"><input type="checkbox" id="key-bypass"> Allow Bypass</label></div>
+            <div class="field"><label class="label"><input type="checkbox" id="key-dashboard"> Allow Dashboard</label></div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Generate Key</button>
+        </form>
+        <div id="key-new" class="key-new" hidden></div>
+        <h3 class="sub-h">Daftar key</h3>
+        <div id="key-list" class="acc-list"></div>
+      </div>
+      <div id="atab-users" hidden><div id="user-list" class="acc-list"></div></div>
+      <div id="atab-stats" hidden>
+        <div id="admin-stats-box" class="acc-list"><p class="hint">Memuat statistik...</p></div>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-sm" data-act="export-users-csv">Export User CSV</button>
+          <button type="button" class="btn btn-sm btn-danger" data-act="admin-stop-all">Stop Semua Query (Global)</button>
+          <button type="button" class="btn btn-sm btn-warn" onclick="triggerExpiryNotify()">Kirim Notif H-3</button>
+        </div>
+      </div>
+      <div id="atab-blacklist" hidden>
+        <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <input id="bl-ip" class="inp" placeholder="IP Address" style="flex:1;min-width:120px">
+          <input id="bl-reason" class="inp" placeholder="Alasan (opsional)" style="flex:2;min-width:150px">
+          <button type="button" class="btn btn-danger btn-sm" data-act="ban-ip">Ban IP</button>
+        </div>
+        <div id="blacklist-list" class="acc-list"><p class="hint">Memuat...</p></div>
+      </div>
+      <div id="atab-broadcast" hidden>
+        <form id="form-broadcast" class="acc-form" style="border-top:0;padding-top:0">
+          <h3>Broadcast ke semua user</h3>
+          <p class="hint" style="margin-bottom:12px">Pesan tampil sebagai notifikasi di dashboard setiap user.</p>
+          <div class="field"><label class="label" for="bc-msg">Pesan</label><textarea id="bc-msg" class="textarea" rows="4" maxlength="500" placeholder="Contoh: Server maintenance malam ini pukul 23:00 WIB"></textarea></div>
+          <div class="field"><label class="label" for="bc-type">Tipe</label><select id="bc-type" class="input"><option value="info">Info (biru)</option><option value="warn">Peringatan (kuning)</option><option value="danger">Penting (merah)</option></select></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <button type="submit" class="btn btn-primary">Kirim Broadcast</button>
+            <button type="button" class="btn btn-sm btn-danger" data-act="clear-broadcast">Hapus Broadcast Aktif</button>
+          </div>
+        </form>
+        <div id="bc-current" class="acc-list" style="margin-top:16px"></div>
+      </div>
+    </section>
+</main>
 </div>
 
 <!-- DIALOG: POST -->
@@ -334,20 +407,6 @@
 </div>
 
 <!-- DIALOG: AKUN -->
-<div id="dlg-acc" class="overlay" hidden>
-  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-acc-title">
-    <div class="dlg-head"><h2 id="dlg-acc-title" class="dlg-title">Kelola Akun</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-acc" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-    <div id="acc-list" class="acc-list"></div>
-    <form id="form-acc" class="acc-form">
-      <h3>Tambah akun baru</h3>
-      <div class="field"><label class="label" for="acc-label">Nama akun</label><input id="acc-label" class="input" data-autofocus autocomplete="off" placeholder="Contoh: akun utama"></div>
-      <div class="field"><label class="label" for="acc-token">Discord token</label><input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun"></div>
-      <div class="field"><label class="label" for="acc-proxy">Proxy (opsional)</label><input id="acc-proxy" class="input" autocomplete="off" placeholder="socks5://user:pass@host:port"></div>
-      <button type="submit" class="btn btn-primary btn-block">Simpan Akun</button>
-    </form>
-  </div>
-</div>
-
 <!-- DIALOG: EDIT TOKEN -->
 <div id="dlg-edit-token" class="overlay" hidden>
   <div class="dlg dlg-sm" role="dialog" aria-modal="true" aria-labelledby="dlg-edit-token-title">
@@ -362,71 +421,6 @@
 </div>
 
 <!-- DIALOG: ADMIN -->
-<div id="dlg-admin" class="overlay" hidden>
-  <div class="dlg dlg-wide" role="dialog" aria-modal="true" aria-labelledby="dlg-admin-title">
-    <div class="dlg-head"><h2 id="dlg-admin-title" class="dlg-title">Panel Admin</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-admin" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-    <div class="seg" role="group" aria-label="Menu admin" style="margin-bottom:16px">
-      <button type="button" data-atab="keys" aria-pressed="true">Key</button>
-      <button type="button" data-atab="users" aria-pressed="false">User</button>
-      <button type="button" data-atab="stats" aria-pressed="false">Statistik</button>
-      <button type="button" data-atab="broadcast" aria-pressed="false">Broadcast</button>
-      <button type="button" data-atab="blacklist" aria-pressed="false">Blacklist IP</button>
-    </div>
-    <div id="atab-keys">
-      <form id="form-key" class="acc-form" style="border-top:0;padding-top:0">
-        <h3>Buat key baru</h3>
-        <div class="two-col">
-          <div class="field"><label class="label" for="key-days">Durasi (hari)</label><input id="key-days" class="input" type="number" min="1" max="3650" value="30" inputmode="numeric"></div>
-          <div class="field"><label class="label" for="key-count">Jumlah key</label><input id="key-count" class="input" type="number" min="1" max="100" value="1" inputmode="numeric"></div>
-          <div class="field"><label class="label" for="key-acc">Limit akun</label><input id="key-acc" class="input" type="number" min="0" value="1" inputmode="numeric"></div>
-          <div class="field"><label class="label" for="key-ch">Limit channel</label><input id="key-ch" class="input" type="number" min="0" value="5" inputmode="numeric"></div>
-        </div>
-        <div class="field"><label class="label" for="key-note">Catatan (opsional)</label><input id="key-note" class="input" maxlength="64" autocomplete="off"></div>
-        <p class="hint">Isi 0 di limit = tanpa batas.</p>
-        <div class="two-col">
-          <div class="field"><label class="label"><input type="checkbox" id="key-bypass"> Allow Bypass</label></div>
-          <div class="field"><label class="label"><input type="checkbox" id="key-dashboard"> Allow Dashboard</label></div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Generate Key</button>
-      </form>
-      <div id="key-new" class="key-new" hidden></div>
-      <h3 class="sub-h">Daftar key</h3>
-      <div id="key-list" class="acc-list"></div>
-    </div>
-    <div id="atab-users" hidden><div id="user-list" class="acc-list"></div></div>
-    <div id="atab-stats" hidden>
-      <div id="admin-stats-box" class="acc-list"><p class="hint">Memuat statistik...</p></div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn btn-sm" data-act="export-users-csv">Export User CSV</button>
-        <button type="button" class="btn btn-sm btn-danger" data-act="admin-stop-all">Stop Semua Query (Global)</button>
-        <button type="button" class="btn btn-sm btn-warn" onclick="triggerExpiryNotify()">Kirim Notif H-3</button>
-      </div>
-    </div>
-    
-    <div id="atab-blacklist" hidden>
-      <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <input id="bl-ip" class="inp" placeholder="IP Address" style="flex:1;min-width:120px">
-        <input id="bl-reason" class="inp" placeholder="Alasan (opsional)" style="flex:2;min-width:150px">
-        <button type="button" class="btn btn-danger btn-sm" data-act="ban-ip">Ban IP</button>
-      </div>
-      <div id="blacklist-list" class="acc-list"><p class="hint">Memuat...</p></div>
-    </div>
-<div id="atab-broadcast" hidden>
-      <form id="form-broadcast" class="acc-form" style="border-top:0;padding-top:0">
-        <h3>Broadcast ke semua user</h3>
-        <p class="hint" style="margin-bottom:12px">Pesan tampil sebagai notifikasi di dashboard setiap user.</p>
-        <div class="field"><label class="label" for="bc-msg">Pesan</label><textarea id="bc-msg" class="textarea" rows="4" maxlength="500" placeholder="Contoh: Server maintenance malam ini pukul 23:00 WIB"></textarea></div>
-        <div class="field"><label class="label" for="bc-type">Tipe</label><select id="bc-type" class="input"><option value="info">Info (biru)</option><option value="warn">Peringatan (kuning)</option><option value="danger">Penting (merah)</option></select></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-          <button type="submit" class="btn btn-primary">Kirim Broadcast</button>
-          <button type="button" class="btn btn-sm btn-danger" data-act="clear-broadcast">Hapus Broadcast Aktif</button>
-        </div>
-      </form>
-      <div id="bc-current" class="acc-list" style="margin-top:16px"></div>
-    </div>
-  </div>
-</div>
-
 <!-- DIALOG: LISENSI -->
 <div id="dlg-lic" class="overlay" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-lic-title">
