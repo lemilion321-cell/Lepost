@@ -339,6 +339,11 @@ async function loadBroadcastBanner() {
   } catch { /* broadcast optional, abaikan error */ }
 }
 
+async function triggerExpiryNotify() {
+  const r = await api('/admin/trigger-expiry-notify', { method: 'POST' });
+  alert('Notif H-3 dikirim ke ' + (r.notified || 0) + ' user.');
+}
+
 async function dismissUserBroadcast(id) {
   try {
     await api(`/broadcast/dismiss/${id}`, { method: 'POST' });
