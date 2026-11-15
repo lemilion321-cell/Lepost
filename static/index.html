@@ -140,12 +140,7 @@
   <header class="app-header">
     <div class="topbar">
       <button type="button" class="btn btn-icon sidebar-toggle" id="sidebar-toggle-btn" aria-label="Buka menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
-      <h1 class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
-        </span>
-        LePost
-      </h1>
+      <div class="hdr-spacer"></div>
       <div class="hdr-right">
         <button id="hdr-lic" type="button" class="pill pill-off" data-act="open-lic" hidden></button>
         <span id="hdr-status" class="pill pill-off" aria-live="polite"><span id="hdr-status-t">Memuat</span></span>
@@ -165,11 +160,13 @@
     </div>
     <nav class="sidebar-nav">
       <ul class="sidebar-list">
-        <li id="nav-admin" hidden><button type="button" class="sidebar-item nav-btn" data-act="open-admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Admin</span></button></li>
+        <li id="nav-admin" hidden><button type="button" class="sidebar-item nav-btn sidebar-item--admin" data-act="open-admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Admin</span></button></li>
+        <li id="nav-admin-divider" class="sidebar-divider" hidden></li>
         <li><a href="#dashboard" data-tab="dashboard" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></a></li>
         <li><a href="#posts" data-tab="posts" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg><span>Auto Post</span></a></li>
         <li><a href="#bypass" data-tab="bypass" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>Bypass</span></a></li>
         <li><a href="#logs" data-tab="logs" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Log</span></a></li>
+        <li class="sidebar-divider"></li>
         <li><button type="button" class="sidebar-item nav-btn" data-act="open-acc"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Akun</span></button></li>
       </ul>
     </nav>

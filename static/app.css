@@ -849,3 +849,8 @@ button.pill { cursor: pointer; font: inherit; }
 .topbar .brand{flex:1;text-align:left}
 
 .sidebar-item.nav-btn{flex-direction:row!important;min-height:unset!important;padding:.75rem 1.2rem!important}
+
+.hdr-spacer{flex:1}
+.sidebar-divider{height:1px;background:var(--line-soft);margin:.4rem .8rem;list-style:none}
+.sidebar-item--admin{color:var(--flame-hi)!important}
+.sidebar-item--admin .ico{color:var(--flame-hi)}

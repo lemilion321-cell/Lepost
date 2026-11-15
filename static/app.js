@@ -275,6 +275,8 @@ function renderMe() {
     if (b) b.hidden = true;
     const navAdmin = $('nav-admin');
     if (navAdmin) navAdmin.hidden = false;
+    const navAdminDiv = $('nav-admin-divider');
+    if (navAdminDiv) navAdminDiv.hidden = false;
     return;
   }
   if (!b) return;
