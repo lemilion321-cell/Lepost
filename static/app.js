@@ -1741,7 +1741,7 @@ document.addEventListener('click', e => {
     case 'refresh':          return refreshNow();
     case 'toggle':           return toggleQ(id, el.dataset.status, el);
     case 'edit':             return editQ(id);
-    case 'clone':            return cloneQ(id);
+    case 'clone':            { const q = state.queries.find(x => x.id === id); ask('Clone Query', q ? `Clone "${q.channel_name}"?` : 'Clone query ini?', 'Clone', false).then(ok => { if (ok) cloneQ(id); }); return; }
     case 'delete':           return delQ(id);
     case 'toggle-all':       return toggleAll(el.dataset.type);
     case 'new-post':         return openPost(el);
