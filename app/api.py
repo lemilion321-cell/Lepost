@@ -421,6 +421,7 @@ def check_rate_limit(ip):
             raise HTTPException(status_code=429, detail=f"Terlalu banyak percobaan. Coba lagi dalam {sisa} menit.")
         if (now - entry["first_attempt"]).total_seconds() > RATE_LIMIT_WINDOW:
             del _login_attempts[ip]
+            entry = None
 
 def record_failed_login(ip):
     from datetime import datetime, timedelta
