@@ -1616,7 +1616,7 @@ function renderQueryFilter(auto) {
       <div class="acc-filter-btn" id="acc-filter-btn" role="button" tabindex="0" aria-haspopup="listbox">
         ${discordSvg}
         <span class="acc-filter-label" id="acc-filter-label">${selectedLabel}</span>
-        <span class="acc-filter-caret">▼</span>
+        
       </div>
       <div class="acc-filter-dropdown" id="acc-filter-dropdown" role="listbox">
         <div class="acc-filter-opt${cur==='all'?' selected':''}" data-val="all" role="option">
