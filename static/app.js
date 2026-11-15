@@ -1649,9 +1649,9 @@ function renderQueryFilter(auto) {
   const btn = $('acc-filter-btn');
   if (btn) {
     btn.onclick = () => {
-      const dlg = document.getElementById('dlg-acc-filter');
-      if (dlg && !dlg.hidden) closeDialog('dlg-acc-filter');
-      else openDialog('dlg-acc-filter', btn);
+      const dlg = $('dlg-acc-filter');
+      if (dlg && dlg.hidden === false) { closeDialog('dlg-acc-filter'); return; }
+      openDialog('dlg-acc-filter', btn);
     };
     btn.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.onclick(); }};
   }
