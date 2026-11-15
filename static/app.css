@@ -140,6 +140,7 @@ img, svg { display: block; }
   transition: color .15s var(--ease);
 }
 @media (hover: hover) { .nav a:hover, .nav-btn:hover { color: var(--text2); } }
+.sidebar-list .nav-btn { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: .75rem !important; padding: .75rem 1.2rem !important; min-height: unset !important; font-size: .925rem !important; width: 100% !important; }
 .nav a > span, .nav-btn > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav a .ico, .nav-btn .ico { width: 19px; height: 19px; }
 .nav a.active { color: var(--flame-hi); }
