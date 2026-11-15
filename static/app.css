@@ -814,3 +814,12 @@ button.pill { cursor: pointer; font: inherit; }
 
 .sec-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;flex-shrink:0}
 .sec-head-right .acc-filter--head{margin:0}
+
+/* sec-head-top: title kiri, filter kanan */
+.sec-head-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
