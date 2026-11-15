@@ -2034,6 +2034,52 @@ async function banIP() {
 }
 
 /* ── Sidebar ── */
+
+function loadAccountsPage(){
+  const box=document.getElementById('acc-list-page'),cnt=document.getElementById('count-accounts');
+  if(!box)return;
+  if(!state.accounts||!state.accounts.length){
+    if(cnt)cnt.textContent='0 akun terdaftar';
+    box.innerHTML='<div class="empty"><h3>Belum ada akun Discord</h3><p>Tambahkan akun dengan token Discord.</p><button type="button" class="btn btn-primary" data-act="new-acc">+ Tambah akun pertama</button></div>';
+    return;
+  }
+  if(cnt)cnt.textContent=state.accounts.length+' akun terdaftar';
+  box.innerHTML=state.accounts.map(a=>`<div class="acc-row"><div class="acc-id"><span class="avatar" aria-hidden="true">${esc((a.label||'?').charAt(0).toUpperCase())}</span><div class="acc-text"><p class="acc-name">${esc(a.label)}</p><p class="acc-meta">@${esc(a.dc_user||'?')}${a.proxy?' · proxy':''}</p></div></div><div class="acc-actions"><button type="button" class="btn btn-icon btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" title="Ganti token">${icon('key')}</button><button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}">${icon('trash')}</button></div></div>`).join('');
+}
+
+function loadAdminPage(){_setAdminPageTab('keys');}
+
+function _setAdminPageTab(tab){
+  document.querySelectorAll('.admin-ptab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.atab2===tab)));
+  ['keys','users','stats','broadcast','blacklist'].forEach(t=>{const el=document.getElementById('admin-page-'+t);if(el)el.hidden=(t!==tab);});
+  _loadAdminPageTab(tab);
+}
+
+function _loadAdminPageTab(tab){
+  const pane=document.getElementById('admin-page-'+tab);
+  if(!pane)return;
+  const idMap={keys:'atab-keys',users:'atab-users',stats:'admin-stats-box',broadcast:'atab-broadcast',blacklist:'atab-blacklist'};
+  const origId=idMap[tab];
+  const orig=origId?document.getElementById(origId):null;
+  if(orig)orig.id=origId+'-bak';
+  const fake=document.createElement('div');
+  fake.id=origId||'admin-page-tmp';
+  document.body.appendChild(fake);
+  let p;
+  if(tab==='keys')p=loadAdminKeys();
+  else if(tab==='users')p=loadAdminUsers();
+  else if(tab==='stats')p=loadAdminStats();
+  else if(tab==='broadcast')p=loadBroadcastCurrent();
+  else if(tab==='blacklist')p=loadBlacklist();
+  const done=()=>{pane.innerHTML=fake.innerHTML;document.body.removeChild(fake);if(orig)orig.id=origId;};
+  if(p&&p.then)p.then(done).catch(done);else done();
+}
+
+document.addEventListener('click',function(e2){
+  const pt=e2.target.closest('.admin-ptab');
+  if(pt)_setAdminPageTab(pt.dataset.atab2);
+});
+
 (function(){
   function openSidebar(){
     document.getElementById('sidebar')?.classList.add('open');
