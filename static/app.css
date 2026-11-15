@@ -811,3 +811,6 @@ button.pill { cursor: pointer; font: inherit; }
 .acc-filter-btn:hover{background:#222630;border-color:#2e3340;color:var(--text)}
 .acc-filter-icon{width:15px;height:15px;flex-shrink:0;color:var(--flame-hi)}
 .acc-filter-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.sec-head-right{display:flex;flex-direction:column;align-items:flex-end;gap:.4rem;flex-shrink:0}
+.sec-head-right .acc-filter--head{margin:0}
