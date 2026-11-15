@@ -370,6 +370,8 @@ function setAdminTab(tab) {
   $('atab-users').hidden = tab !== 'users';
   $('atab-stats').hidden = tab !== 'stats';
   $('atab-broadcast').hidden = tab !== 'broadcast';
+  $('atab-blacklist').hidden = tab !== 'blacklist';
+  if (tab === 'blacklist') loadBlacklist();
   if (tab === 'users') loadAdminUsers();
   else if (tab === 'stats') loadAdminStats();
   else if (tab === 'broadcast') loadBroadcastCurrent();
