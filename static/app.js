@@ -1600,8 +1600,12 @@ function renderQueryFilter(auto) {
   const ids = Object.keys(accMap);
   if (ids.length < 2) { box.innerHTML = ''; return; }
   const cur = state.filterAcc || 'all';
-  box.innerHTML = `<button class="acc-pill${cur==='all'?' active':''}" data-filter-acc="all">Semua</button>`
-    + ids.map(id => `<button class="acc-pill${cur===id?' active':''}" data-filter-acc="${id}">${accMap[id]}</button>`).join('');
+  box.innerHTML = `<select class="select acc-filter-sel" id="acc-filter-select">
+    <option value="all">Semua akun</option>
+    ${ids.map(id => `<option value="${id}"${cur===id?' selected':''}>${accMap[id]}</option>`).join('')}
+  </select>`;
+  const sel = $('acc-filter-select');
+  if (sel) sel.onchange = () => { state.filterAcc = sel.value; renderQueries(state.queries || []); };
 }
 
 function renderQueries(list) {
