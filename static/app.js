@@ -1791,15 +1791,12 @@ async function boot() {
   if (!state.me.is_admin) {
     // Blokir semua kalau suspended
     if (state.me.is_suspended) {
-      const tabBypass = document.querySelector('a[href="#bypass"]')?.parentElement;
-      if (tabBypass) tabBypass.hidden = true;
       const main = $('main');
       if (main) main.innerHTML =
         '<div class="notice exp-banner" style="border-color:#ef4444">' +
         '<p class="notice-title" style="color:#ef4444">⛔ Akun Disuspend</p>' +
         '<p class="notice-msg">Akun kamu telah dikunci oleh admin. Hubungi owner untuk informasi lebih lanjut.</p>' +
         '</div>';
-      return;
     }
     // Bypass: tab tetap muncul, lock konten kalau tidak allow
     if (!state.me.allow_bypass) {
