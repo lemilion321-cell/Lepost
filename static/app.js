@@ -1648,8 +1648,12 @@ function renderQueryFilter(auto) {
   // buka dialog saat tombol diklik
   const btn = $('acc-filter-btn');
   if (btn) {
-    btn.onclick = () => openDialog('dlg-acc-filter', btn);
-    btn.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDialog('dlg-acc-filter', btn); }};
+    btn.onclick = () => {
+      const dlg = document.getElementById('dlg-acc-filter');
+      if (dlg && !dlg.hidden) closeDialog('dlg-acc-filter');
+      else openDialog('dlg-acc-filter', btn);
+    };
+    btn.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.onclick(); }};
   }
 }
 
