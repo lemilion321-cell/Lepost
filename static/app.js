@@ -713,6 +713,8 @@ const currentRoute = () => {
 function showTab(tab) {
   if (state.me && state.me.is_suspended && tab !== 'accounts' && tab !== 'admin') return;
   document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== tab; });
+  const main = document.querySelector('main');
+  if (main) main.style.visibility = 'visible';
   document.querySelectorAll('[data-tab]').forEach(a => {
     const on = a.dataset.tab === tab;
     a.classList.toggle('active', on);
