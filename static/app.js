@@ -530,6 +530,12 @@ async function loadAdminUsers() {
         </div>
         <p class="acc-meta">${u.is_admin ? 'Tanpa batas' : `Sisa ${esc(fmtLeft(u.seconds_left))} (s/d ${fmtDate(u.expires_at)})`} · akun ${u.accounts}/${lim(u.max_accounts)} · channel ${u.channels}/${lim(u.max_channels)}</p>
         ${u.is_admin ? '' : `
+        <div class="row-actions" style="margin-top:6px">
+          <button type="button" class="btn btn-sm btn-ghost" data-act="toggle-user-edit" data-id="${u.id}">Edit</button>
+          <button type="button" class="btn btn-sm ${u.is_suspended ? 'btn-primary' : 'btn-warning'}" data-act="suspend-user" data-id="${u.id}">${u.is_suspended ? 'Aktifkan' : 'Suspend'}</button>
+          <button type="button" class="btn btn-sm btn-danger" data-act="del-user" data-id="${u.id}" data-name="${esc(u.username)}">Hapus</button>
+        </div>
+        <div class="user-edit-form" id="user-edit-${u.id}" hidden style="margin-top:8px">
         <div class="two-col">
           <input class="input" data-f="days" type="number" inputmode="numeric" placeholder="+/- hari" aria-label="Tambah hari">
           <input class="input" data-f="pw" type="text" autocomplete="off" placeholder="Password baru" aria-label="Password baru">
@@ -540,10 +546,9 @@ async function loadAdminUsers() {
           <label class="label"><input type="checkbox" data-f="bypass" ${u.allow_bypass ? 'checked' : ''}> Allow Bypass</label>
           <label class="label"><input type="checkbox" data-f="dashboard" ${u.allow_dashboard ? 'checked' : ''}> Allow Dashboard</label>
         </div>
-        <div class="row-actions">
-          <button type="button" class="btn btn-sm btn-primary" data-act="save-user" data-id="${u.id}">Simpan</button>
-          <button type="button" class="btn btn-sm ${u.is_suspended ? 'btn-primary' : 'btn-warning'}" data-act="suspend-user" data-id="${u.id}">${u.is_suspended ? 'Aktifkan' : 'Suspend'}</button>
-          <button type="button" class="btn btn-sm btn-danger" data-act="del-user" data-id="${u.id}" data-name="${esc(u.username)}">Hapus user</button>
+        <div class="row-actions" style="margin-top:6px">
+            <button type="button" class="btn btn-sm btn-primary" data-act="save-user" data-id="${u.id}">Simpan</button>
+          </div>
         </div>`}
       </div>`).join('');
   } catch (e) { toast(e.message, true); }
@@ -591,6 +596,14 @@ async function stopUserQueries(id) {
     toast('Query dihentikan: ' + r.stopped + ' query distop.');
     loadAdminUsers();
   } catch (e) { toast(e.message, true); }
+}
+
+function toggleUserEdit(id) {
+  const form = document.getElementById('user-edit-' + id);
+  if (!form) return;
+  form.hidden = !form.hidden;
+  const btn = document.querySelector('[data-act="toggle-user-edit"][data-id="' + id + '"]');
+  if (btn) btn.textContent = form.hidden ? 'Edit' : 'Tutup';
 }
 
 async function delUser(id, name) {
@@ -1697,6 +1710,7 @@ document.addEventListener('click', e => {
     case 'revoke-key':       return revokeKey(id);
     case 'save-user':        return saveUser(id, el);
     case 'del-user':         return delUser(id, el.dataset.name);
+    case 'toggle-user-edit': return toggleUserEdit(id);
     case 'suspend-user':     return suspendUser(id, el);
     case 'stop-queries':     return stopUserQueries(id);
     case 'refresh':          return refreshNow();
