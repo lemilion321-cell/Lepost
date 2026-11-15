@@ -12,7 +12,7 @@ import string
 from datetime import timedelta
 from typing import Any, Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Request, APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, text
 from sqlalchemy.orm import Session
@@ -437,9 +437,12 @@ def reset_rate_limit(ip):
     _login_attempts.pop(ip, None)
 
 @router.post("/login")
-def login(inp: LoginIn, db: Session = Depends(get_db)):
+def login(request: Request, inp: LoginIn, db: Session = Depends(get_db)):
+    client_ip = request.client.host
+    check_rate_limit(client_ip)
     u = db.query(User).filter_by(username=inp.username).first()
     if not u or not verify_pw(inp.password, u.password_hash):
+        record_failed_login(client_ip)
         raise HTTPException(401, "Username / password salah")
     if u.is_suspended:
         raise HTTPException(403, "Akun kamu disuspend. Hubungi admin.")
