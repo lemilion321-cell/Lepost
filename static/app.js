@@ -1598,7 +1598,7 @@ function renderQueryFilter(auto) {
     if (acc) accMap[String(acc.account_id)] = acc.label || ('Akun ' + acc.account_id);
   });
   const ids = Object.keys(accMap);
-  if (ids.length < 2) { box.innerHTML = ''; return; }
+  if (ids.length < 1) { box.innerHTML = ''; return; }
 
   const cur = state.filterAcc || 'all';
   const totalAll = auto.length;
