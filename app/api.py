@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 """
 api.py — LePost backend (merged)
 Semua endpoint dari source_lama + endpoint baru untuk ui_baru:
@@ -399,8 +400,41 @@ def signup(inp: SignupIn, db: Session = Depends(get_db)):
         allow_dashboard=lic.allow_dashboard,
     ))
     db.commit()
+    reset_rate_limit(client_ip)
     return {"token": make_token(u)}
 
+
+
+# === RATE LIMIT LOGIN ===
+_login_attempts = {}
+RATE_LIMIT_MAX = 5
+RATE_LIMIT_WINDOW = 300
+RATE_LIMIT_LOCKOUT = 900
+
+def check_rate_limit(ip):
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    entry = _login_attempts.get(ip)
+    if entry:
+        if entry.get("locked_until") and now < entry["locked_until"]:
+            sisa = int((entry["locked_until"] - now).total_seconds() / 60) + 1
+            raise HTTPException(status_code=429, detail=f"Terlalu banyak percobaan. Coba lagi dalam {sisa} menit.")
+        if (now - entry["first_attempt"]).total_seconds() > RATE_LIMIT_WINDOW:
+            del _login_attempts[ip]
+
+def record_failed_login(ip):
+    from datetime import datetime, timedelta
+    now = datetime.utcnow()
+    entry = _login_attempts.get(ip)
+    if not entry or (now - entry["first_attempt"]).total_seconds() > RATE_LIMIT_WINDOW:
+        _login_attempts[ip] = {"count": 1, "first_attempt": now, "locked_until": None}
+    else:
+        entry["count"] += 1
+        if entry["count"] >= RATE_LIMIT_MAX:
+            entry["locked_until"] = now + timedelta(seconds=RATE_LIMIT_LOCKOUT)
+
+def reset_rate_limit(ip):
+    _login_attempts.pop(ip, None)
 
 @router.post("/login")
 def login(inp: LoginIn, db: Session = Depends(get_db)):
