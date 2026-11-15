@@ -133,6 +133,23 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+@app.middleware("http")
+async def check_ip_blacklist(request, call_next):
+    from app.api import _blacklist_cache, _blacklist_loaded, _load_blacklist
+    from app.database import SessionLocal
+    ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+    if not _blacklist_loaded:
+        db = SessionLocal()
+        try:
+            _load_blacklist(db)
+        finally:
+            db.close()
+    if ip in _blacklist_cache:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(status_code=403, content={"detail": "Akses ditolak."})
+    return await call_next(request)
+
 @app.middleware("http")
 async def security_headers(request, call_next):
     response = await call_next(request)

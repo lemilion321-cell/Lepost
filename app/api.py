@@ -71,6 +71,14 @@ class Broadcast(Base):
 
 
 
+
+class IPBlacklist(Base):
+    __tablename__ = "ip_blacklist"
+    id = Column(Integer, primary_key=True)
+    ip = Column(String, unique=True, nullable=False)
+    reason = Column(String, default="")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class UserBroadcast(Base):
     """Notif broadcast khusus per user (misal: H-3 lisensi habis)."""
     __tablename__ = "user_broadcasts"
@@ -87,6 +95,7 @@ def _ensure_extra_tables():
         License.__table__,
         Broadcast.__table__,
         UserBroadcast.__table__,
+        IPBlacklist.__table__,
     ])
 
 
@@ -413,6 +422,17 @@ def signup(inp: SignupIn, db: Session = Depends(get_db)):
     return {"token": make_token(u)}
 
 
+
+
+# === IP BLACKLIST CACHE ===
+_blacklist_cache: set = set()
+_blacklist_loaded = False
+
+def _load_blacklist(db: Session):
+    global _blacklist_cache, _blacklist_loaded
+    rows = db.query(IPBlacklist.ip).all()
+    _blacklist_cache = {r.ip for r in rows}
+    _blacklist_loaded = True
 
 # === RATE LIMIT LOGIN ===
 _login_attempts = {}
@@ -1025,6 +1045,40 @@ def admin_del_broadcast(user: User = Depends(current_user), db: Session = Depend
 
 
 # ─────────────────────────── user: broadcast (baca saja) ───────────────────────────
+
+# === ADMIN IP BLACKLIST ===
+@router.get("/admin/blacklist")
+def get_blacklist(db: Session = Depends(get_db), _=Depends(admin_only)):
+    rows = db.query(IPBlacklist).order_by(IPBlacklist.created_at.desc()).all()
+    return [{"id": r.id, "ip": r.ip, "reason": r.reason, "created_at": _iso(r.created_at)} for r in rows]
+
+@router.post("/admin/blacklist")
+def ban_ip(data: dict, db: Session = Depends(get_db), _=Depends(admin_only)):
+    global _blacklist_cache
+    ip = data.get("ip", "").strip()
+    reason = data.get("reason", "").strip()
+    if not ip:
+        raise HTTPException(400, "IP tidak boleh kosong")
+    existing = db.query(IPBlacklist).filter_by(ip=ip).first()
+    if existing:
+        raise HTTPException(400, "IP sudah di-blacklist")
+    row = IPBlacklist(ip=ip, reason=reason)
+    db.add(row)
+    db.commit()
+    _blacklist_cache.add(ip)
+    return {"ok": True, "ip": ip}
+
+@router.delete("/admin/blacklist/{ip_id}")
+def unban_ip(ip_id: int, db: Session = Depends(get_db), _=Depends(admin_only)):
+    global _blacklist_cache
+    row = db.query(IPBlacklist).filter_by(id=ip_id).first()
+    if not row:
+        raise HTTPException(404, "IP tidak ditemukan")
+    _blacklist_cache.discard(row.ip)
+    db.delete(row)
+    db.commit()
+    return {"ok": True}
+
 @router.get("/broadcast")
 def get_broadcast(user: User = Depends(current_user), db: Session = Depends(get_db)):
     """User membaca broadcast: user-specific dulu, fallback ke global."""

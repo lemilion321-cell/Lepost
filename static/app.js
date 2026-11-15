@@ -1752,6 +1752,7 @@ document.addEventListener('click', e => {
     case 'export-csv':       return exportLogs();
     case 'close':            return closeDialog(el.dataset.dialog);
     case 'admin-stop-user':  return adminStopUserQueries(id, el.dataset.name);
+    case 'ban-ip': banIP(); break;
     case 'admin-stop-all':   return adminStopAll();
     case 'export-users-csv': return exportUsersCSV();
     case 'clear-broadcast':  return clearBroadcast();
@@ -1884,3 +1885,51 @@ async function boot() {
   setInterval(loadBroadcastBanner, 15000);
 }
 boot();
+
+// === BLACKLIST IP ===
+async function loadBlacklist() {
+  const box = $('blacklist-list');
+  if (!box) return;
+  try {
+    const data = await api('/admin/blacklist');
+    if (!data.length) { box.innerHTML = '<p class="hint">Belum ada IP yang di-ban.</p>'; return; }
+    box.innerHTML = data.map(r => `
+      <div class="acc-item" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div>
+          <strong>${esc(r.ip)}</strong>
+          ${r.reason ? `<span class="hint" style="margin-left:8px">${esc(r.reason)}</span>` : ''}
+          <span class="hint" style="margin-left:8px">${r.created_at ? r.created_at.slice(0,10) : ''}</span>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="unbanIP(${r.id}, '${esc(r.ip)}')">Unban</button>
+      </div>
+    `).join('');
+  } catch(e) {
+    box.innerHTML = '<p class="hint">Gagal memuat blacklist.</p>';
+  }
+}
+
+async function unbanIP(id, ip) {
+  if (!await ask('Unban IP ini?', ip, 'Unban')) return;
+  try {
+    await api('/admin/blacklist/' + id, { method: 'DELETE' });
+    toast('IP ' + ip + ' berhasil di-unban.');
+    loadBlacklist();
+  } catch(e) {
+    toast('Gagal unban: ' + e.message, true);
+  }
+}
+
+async function banIP() {
+  const ip = $('bl-ip').value.trim();
+  const reason = $('bl-reason').value.trim();
+  if (!ip) { toast('IP tidak boleh kosong', true); return; }
+  try {
+    await api('/admin/blacklist', { method: 'POST', body: JSON.stringify({ ip, reason }) });
+    toast('IP ' + ip + ' berhasil di-ban.');
+    $('bl-ip').value = '';
+    $('bl-reason').value = '';
+    loadBlacklist();
+  } catch(e) {
+    toast('Gagal ban: ' + e.message, true);
+  }
+}

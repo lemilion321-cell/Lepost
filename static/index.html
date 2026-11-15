@@ -358,6 +358,7 @@
       <button type="button" data-atab="users" aria-pressed="false">User</button>
       <button type="button" data-atab="stats" aria-pressed="false">Statistik</button>
       <button type="button" data-atab="broadcast" aria-pressed="false">Broadcast</button>
+      <button type="button" data-atab="blacklist" aria-pressed="false">Blacklist IP</button>
     </div>
     <div id="atab-keys">
       <form id="form-key" class="acc-form" style="border-top:0;padding-top:0">
@@ -389,7 +390,16 @@
         <button type="button" class="btn btn-sm btn-warn" onclick="triggerExpiryNotify()">Kirim Notif H-3</button>
       </div>
     </div>
-    <div id="atab-broadcast" hidden>
+    
+    <div id="atab-blacklist" hidden>
+      <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <input id="bl-ip" class="inp" placeholder="IP Address" style="flex:1;min-width:120px">
+        <input id="bl-reason" class="inp" placeholder="Alasan (opsional)" style="flex:2;min-width:150px">
+        <button type="button" class="btn btn-danger btn-sm" data-act="ban-ip">Ban IP</button>
+      </div>
+      <div id="blacklist-list" class="acc-list"><p class="hint">Memuat...</p></div>
+    </div>
+<div id="atab-broadcast" hidden>
       <form id="form-broadcast" class="acc-form" style="border-top:0;padding-top:0">
         <h3>Broadcast ke semua user</h3>
         <p class="hint" style="margin-bottom:12px">Pesan tampil sebagai notifikasi di dashboard setiap user.</p>
