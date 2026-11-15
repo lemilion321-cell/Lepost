@@ -1584,7 +1584,7 @@ function cardHtml(q, n) {
       <button type="button" class="btn ${on ? 'btn-stop' : 'btn-start'}" data-act="toggle" data-id="${q.id}" data-status="${esc(q.status)}">${icon(on ? 'stop' : 'play')}<span>${on ? 'Stop' : 'Start'}</span></button>
       <button type="button" class="btn" data-act="edit" data-id="${q.id}">${icon('edit')}<span>Edit</span></button>
       <button type="button" class="btn" data-act="clone" data-id="${q.id}">${icon('copy')}<span>Clone</span></button>
-      <button type="button" class="btn btn-danger" data-act="delete" data-id="${q.id}">${icon('trash')}<span>Hapus</span></button>
+      <button type="button" class="btn btn-danger" data-act="delete" data-id="${q.id}" ${q.status==='active'?'disabled title="Stop query dulu sebelum menghapus"':''} >${icon('trash')}<span>Hapus</span></button>
     </div>
   </article>`;
 }
@@ -1718,7 +1718,7 @@ async function toggleQ(id, status, btn) {
 async function delQ(id) {
   const q = state.queries.find(x => x.id === id);
   if (!(await ask('Hapus query ini?', chn(q?.channel_name), 'Hapus'))) return;
-  try { await api(`/queries/${id}`, { method: 'DELETE' }); toast('Query dihapus.'); refreshNow(); }
+  try { await api(`/queries/${id}`, { method: 'DELETE' }); toast('Query dihapus.'); refreshNow(); } catch(e) { toast(e.message || 'Gagal hapus query.', true); return; }
   catch (e) { toast(e.message, true); }
 }
 
