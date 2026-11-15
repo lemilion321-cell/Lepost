@@ -1650,7 +1650,7 @@ async function cloneQ(id) {
   };
   try {
     await api('/queries', { method: 'POST', body: JSON.stringify(p) });
-    toast('Query di-clone, status berhenti.');
+    toast('Query berhasil di-clone!');
     refreshNow();
   } catch (e) { toast(e.message, true); }
 }
