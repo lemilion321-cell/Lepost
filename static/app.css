@@ -844,3 +844,8 @@ button.pill { cursor: pointer; font: inherit; }
 .sidebar-footer{padding:1rem 1.2rem;border-top:1px solid var(--line-soft);display:flex;align-items:center;gap:.5rem}
 .sidebar-toggle svg{width:20px;height:20px}
 /* ══════════════════════════════════════ */
+
+.topbar{justify-content:flex-start!important}
+.topbar .brand{flex:1;text-align:left}
+
+.sidebar-item.nav-btn{flex-direction:row!important;min-height:unset!important;padding:.75rem 1.2rem!important}
