@@ -1599,7 +1599,6 @@ function renderQueryFilter(auto) {
   });
   const ids = Object.keys(accMap);
   // selalu tampilkan tombol filter meski tidak ada akun berbeda
-  if (box) box.innerHTML = '<div style="color:lime;font-size:11px">DEBUG: auto=' + auto.length + '</div>';
   console.log('renderQueryFilter called, auto.length=', auto.length, 'box=', box);
 
   const cur = state.filterAcc || 'all';
