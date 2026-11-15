@@ -754,3 +754,40 @@ button.pill { cursor: pointer; font: inherit; }
 
 
 /* filter sejajar subtitle */
+
+/* dialog pilih akun */
+.acc-dlg-list{display:flex;flex-direction:column;gap:.35rem;margin-top:12px}
+.acc-dlg-tab{
+  display:flex;align-items:center;gap:.6rem;
+  height:44px;padding:0 14px;
+  background:var(--raised);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  cursor:pointer;
+  font-size:.88rem;font-weight:600;
+  color:var(--text2);
+  transition:background .12s,border-color .12s,color .12s;
+  user-select:none;
+}
+.acc-dlg-tab:hover{background:#222630;border-color:#2e3340;color:var(--text)}
+.acc-dlg-tab.active{
+  background:var(--flame-soft);
+  border-color:var(--flame-line);
+  color:var(--flame-hi);
+}
+.acc-dlg-tab-icon{width:16px;height:16px;flex-shrink:0}
+.acc-dlg-tab-label{flex:1}
+.acc-dlg-tab-badge{
+  font-size:.72rem;font-weight:700;
+  background:var(--surface);
+  color:var(--muted);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:.05rem .4rem;
+  min-width:1.4rem;text-align:center;
+}
+.acc-dlg-tab.active .acc-dlg-tab-badge{
+  background:var(--flame-soft);
+  color:var(--flame-hi);
+  border-color:var(--flame-line);
+}
