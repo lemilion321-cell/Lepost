@@ -798,3 +798,8 @@ button.pill { cursor: pointer; font: inherit; }
 /* sec-head dengan filter */
 .sec-head--filter { align-items: flex-start; }
 .sec-head-left { display: flex; flex-direction: column; gap: 2px; }
+
+/* filter sejajar subtitle */
+.sec-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%}
+.sec-title-row .acc-filter{margin:0}
+.sec-title-row .acc-filter-wrap{margin:0}

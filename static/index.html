@@ -239,13 +239,15 @@
 
     <section data-view="posts" aria-labelledby="posts-title" hidden>
       <div class="sec-head">
-        <div><h2 id="posts-title" class="sec-title">Auto Post</h2><p id="count-auto" class="sec-sub">Memuat...</p></div>
+        <div class="sec-title-row">
+          <div><h2 id="posts-title" class="sec-title">Auto Post</h2><p id="count-auto" class="sec-sub">Memuat...</p></div>
+          <div id="filter-auto" class="acc-filter"></div>
+        </div>
         <div class="sec-actions">
           <button type="button" id="btn-toggle-auto" class="btn btn-start" data-act="toggle-all" data-type="auto">Start semua</button>
           <button type="button" class="btn btn-primary" data-act="new-post">+ Tambah Post</button>
         </div>
       </div>
-      <div id="filter-auto" class="acc-filter"></div>
       <div id="q-list-auto" class="qlist"></div>
     </section>
 
