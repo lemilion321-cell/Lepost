@@ -690,6 +690,7 @@ const currentRoute = () => {
   return TABS.includes(h) ? h : 'dashboard';
 };
 function showTab(tab) {
+  if (state.me && state.me.is_suspended) return;
   document.querySelectorAll('[data-view]').forEach(s => { s.hidden = s.dataset.view !== tab; });
   document.querySelectorAll('[data-tab]').forEach(a => {
     const on = a.dataset.tab === tab;
