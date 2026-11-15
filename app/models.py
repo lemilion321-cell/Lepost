@@ -78,6 +78,7 @@ class Query(Base):
     embed_json: Mapped[str] = mapped_column(Text, default="{}")
     webhook_url: Mapped[str] = mapped_column(Text, default="")
     delay_min: Mapped[int] = mapped_column(Integer, default=5)
+    delay_random_min: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(16), default="stopped")
     last_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 

@@ -54,7 +54,10 @@ def _load_cfg(q_id: int):
         except ValueError:
             embed = {}
         n = max(len(targets), 1) if q.query_type == "bypass" else 1
-        delay = max(float(q.delay_min or 1) * 60.0 / n, MIN_DELAY_SEC)
+        import random as _random
+        base_delay = max(float(q.delay_min or 1) * 60.0 / n, MIN_DELAY_SEC)
+        rand_sec = float(getattr(q, 'delay_random_min', 0) or 0) * 60.0
+        delay = base_delay + _random.uniform(0, rand_sec) if rand_sec > 0 else base_delay
         return {
             "id": q.id, "type": q.query_type, "status": q.status, "targets": targets,
             "content": q.content or "", "embed": embed if isinstance(embed, dict) else {},

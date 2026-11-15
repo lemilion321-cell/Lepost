@@ -1318,6 +1318,7 @@ async function submitPost(e) {
     guild_id: $('post-guild')?.value || '',
     channel_id: ch.id, channel_name: ch.name,
     content, embed: state.editEmbed || {}, webhook_url: webhook, delay_min: delay,
+    delay_random_min: Number($('post-delay-random')?.value) || 0,
   };
   await saveQuery(e.target, id, payload, 'Post disimpan.', 'dlg-post');
 }
@@ -1451,6 +1452,7 @@ async function editQ(id) {
     const pacc = $('post-acc'); if (pacc) pacc.value = accId;
     const pc = $('post-content'); if (pc) pc.value = q.content || q.bypass_data?.[0]?.content || '';
     const pd = $('post-delay'); if (pd) pd.value = q.delay_min;
+    const pdr = $('post-delay-random'); if (pdr) pdr.value = q.delay_random_min || 0;
     const pw = $('post-webhook-url'); if (pw) pw.value = q.webhook_url || '';
     openDialog('dlg-post', opener);
     const guilds = await loadGuilds(accId, 'post', true);
