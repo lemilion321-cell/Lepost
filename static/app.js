@@ -1286,6 +1286,13 @@ function resetPostForm() {
   const guild = $('post-guild');
   if (guild) { setSelect(guild, [], 'Pilih akun dulu'); guild.disabled = true; }
   resetChannels('post');
+  // Load last settings
+  try {
+    const last = JSON.parse(localStorage.getItem('lepost_last_post') || '{}');
+    if (last.acc) { const a = $('post-acc'); if (a) a.value = last.acc; }
+    if (last.delay) { const d = $('post-delay'); if (d) d.value = last.delay; }
+    if (last.random) { const r = $('post-delay-random'); if (r) r.value = last.random; }
+  } catch(e) {}
 }
 
 function openPost(opener) {
@@ -1320,6 +1327,14 @@ async function submitPost(e) {
     content, embed: state.editEmbed || {}, webhook_url: webhook, delay_min: delay,
     delay_random_min: Number($('post-delay-random')?.value) || 0,
   };
+  // Save last settings
+  try {
+    localStorage.setItem('lepost_last_post', JSON.stringify({
+      acc: $('post-acc')?.value,
+      delay: $('post-delay')?.value,
+      random: $('post-delay-random')?.value,
+    }));
+  } catch(e) {}
   await saveQuery(e.target, id, payload, 'Post disimpan.', 'dlg-post');
 }
 
@@ -1384,6 +1399,17 @@ function resetBypassForm() {
   if (bg) { setSelect(bg, [], 'Pilih akun dulu'); bg.disabled = true; }
   resetChannels('bypass');
   recalcBypassDelay();
+  // Load last bypass settings
+  try {
+    const last = JSON.parse(localStorage.getItem('lepost_last_bypass') || '{}');
+    if (last.accs && Array.isArray(last.accs)) {
+      last.accs.forEach(accId => {
+        const cb = document.querySelector(`.bypass-check[value="${accId}"]`);
+        if (cb) { cb.checked = true; cb.closest('.pick').classList.add('is-on'); cb.closest('.pick').querySelector('.bypass-text').hidden = false; }
+      });
+      recalcBypassDelay();
+    }
+  } catch(e) {}
 }
 
 function openBypass(opener) {
@@ -1413,6 +1439,11 @@ async function submitBypass(e) {
     channel_id: ch.id, channel_name: ch.name,
     delay_min: totalSM,
   };
+  // Save last bypass settings
+  try {
+    const checkedAccs = [...document.querySelectorAll('.bypass-check:checked')].map(c => c.value);
+    localStorage.setItem('lepost_last_bypass', JSON.stringify({ accs: checkedAccs }));
+  } catch(e) {}
   await saveQuery(e.target, id, payload, 'Bypass disimpan.', 'dlg-bypass');
 }
 
