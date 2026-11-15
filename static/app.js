@@ -3,7 +3,7 @@
    Perbaikan: /me, /public, /signup, /redeem, /admin/*, broadcast, grafik, undefined. */
 
 const API = '/api';
-const TABS = ['dashboard', 'posts', 'bypass', 'logs'];
+const TABS = ['dashboard', 'posts', 'bypass', 'logs', 'accounts', 'admin'];
 const REFRESH_MS = 10000;
 
 const state = {
@@ -380,7 +380,7 @@ function setAdminTab(tab) {
   else loadAdminKeys();
 }
 
-function openAdmin(opener) { openDialog('dlg-admin', opener); setAdminTab('keys'); }
+function openAdmin(opener) { location.hash = '#admin'; }
 
 const fmtDate = iso => iso
   ? new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -720,12 +720,15 @@ function showTab(tab) {
   });
   loadStats();
   loadView(tab);
+  if (tab === 'accounts') loadAccounts().then(loadAccountsPage);
 }
 window.addEventListener('hashchange', () => { window.scrollTo(0, 0); showTab(currentRoute()); });
 
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
   if (tab === 'logs') return loadLogs();
+  if (tab === 'accounts') return loadAccountsPage();
+  if (tab === 'admin') return loadAdminPage();
   return loadQueries();
 }
 function refreshNow() {
@@ -1151,31 +1154,8 @@ async function submitEditToken(e) {
   finally { setBusy(btn, false); }
 }
 
-function openAccounts(opener) {
-  renderAccountList();
-  openDialog('dlg-acc', opener);
-}
+function openAccounts(opener) { location.hash = '#accounts'; }
 
-async function submitAccount(e) {
-  e.preventDefault();
-  const label = $('acc-label').value.trim();
-  const token = $('acc-token').value.trim();
-  const proxy = $('acc-proxy').value.trim();
-  if (!label || !token) return toast('Nama akun dan token wajib diisi.', true);
-  const btn = e.submitter || e.target.querySelector('[type=submit]');
-  setBusy(btn, true);
-  try {
-    await api('/accounts', { method: 'POST', body: JSON.stringify({ label, token, proxy }) });
-    e.target.reset();
-    await loadAccounts();
-    renderAccountList();
-    loadStats();
-    toast('Akun ditambahkan.');
-  } catch (err) { toast(err.message, true); }
-  finally { setBusy(btn, false); }
-}
-
-/* ───────── channel ───────── */
 function resetChannels(mode) {
   state.channels[mode] = [];
   const search = $(`${mode}-ch-search`);

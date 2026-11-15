@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0b0f">
+<title>LePost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=2">
+</head>
+<body>
+<a class="skip" href="#main">Lewati ke konten</a>
+
+<!-- LANDING + LOGIN -->
+<div id="view-login" hidden>
+  <header class="land-top">
+    <div class="land-brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+      </span>
+      LePost
+    </div>
+    <a class="btn btn-sm" href="https://wa.me/6282186928854">Hubungi Owner</a>
+  </header>
+
+  <section class="land-hero">
+    <div class="land-copy">
+      <p class="eyebrow">Jasa Auto Post Discord</p>
+      <h1 class="land-h1">Posting jalan sendiri, <em>24 jam non-stop.</em></h1>
+      <p class="land-lead">LePost bantu kamu promosi di banyak channel Discord secara otomatis. Atur sekali, biarkan jalan terus tanpa perlu ditungguin.</p>
+      <div class="land-cta">
+        <a class="btn btn-primary" href="#auth-card">Masuk / Daftar</a>
+        <a class="btn" href="#fitur">Lihat fitur</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-top"><span class="hstat-n" data-target="24">0</span><span class="hstat-unit">jam</span></div><span class="hstat-label">non-stop</span></div>
+        <div class="hstat"><div class="hstat-top"><span class="hstat-n" data-target="99">0</span><span class="hstat-unit">%</span></div><span class="hstat-label">uptime</span></div>
+        <div class="hstat"><div class="hstat-top"><span class="hstat-n" data-target="500">0</span><span class="hstat-unit">+</span></div><span class="hstat-label">post/hari</span></div>
+      </div>
+    </div>
+
+    <div id="auth-card" class="login-card" scroll-margin-top="16px">
+      <div class="seg auth-seg" role="group" aria-label="Pilih masuk atau daftar">
+        <button type="button" data-auth="login" aria-pressed="true">Masuk</button>
+        <button type="button" data-auth="signup" aria-pressed="false">Daftar pakai key</button>
+      </div>
+      <form id="login-form" class="stack" novalidate>
+        <div class="field">
+          <label class="label" for="username">Username</label>
+          <input id="username" class="input" type="text" autocomplete="username" placeholder="Username" required>
+        </div>
+        <div class="field">
+          <label class="label" for="password">Password</label>
+          <input id="password" class="input" type="password" autocomplete="current-password" placeholder="Masukkan password" required>
+        </div>
+        <p id="login-err" class="notice-inline" role="alert" hidden></p>
+        <button id="login-btn" type="submit" class="btn btn-primary btn-block">Masuk</button>
+      </form>
+      <form id="signup-form" class="stack" novalidate hidden>
+        <div class="field">
+          <label class="label" for="su-username">Username baru</label>
+          <input id="su-username" class="input" type="text" autocomplete="username" placeholder="Minimal 3 karakter">
+        </div>
+        <div class="field">
+          <label class="label" for="su-password">Password</label>
+          <input id="su-password" class="input" type="password" autocomplete="new-password" placeholder="Minimal 6 karakter">
+        </div>
+        <div class="field">
+          <label class="label" for="su-key">Key dari owner</label>
+          <input id="su-key" class="input" type="text" autocomplete="off" autocapitalize="characters" placeholder="LP-XXXX-XXXX-XXXX-XXXX">
+        </div>
+        <p id="signup-err" class="notice-inline" role="alert" hidden></p>
+        <button id="signup-btn" type="submit" class="btn btn-primary btn-block">Daftar &amp; Masuk</button>
+        <p class="hint">Belum punya key? Hubungi owner di bagian bawah halaman.</p>
+      </form>
+    </div>
+  </section>
+
+  <section id="fitur" class="land-sec">
+    <h2 class="land-h2">Fitur LePost</h2>
+    <ul class="feat-grid">
+      <li class="feat"><span class="feat-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg></span><h3>Auto Post 24/7</h3><p>Posting otomatis ke channel Discord non-stop, jalan di server jadi ga perlu buka HP atau PC.</p></li>
+      <li class="feat"><span class="feat-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg></span><h3>Delay Fleksibel</h3><p>Atur jeda antar post per channel, dari 1 menit sampai 7 hari.</p></li>
+      <li class="feat"><span class="feat-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></span><h3>Mode Bypass</h3><p>Gabungkan beberapa akun buat gilir posting di channel yang kena slowmode.</p></li>
+      <li class="feat"><span class="feat-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><h3>Multi Akun + Proxy</h3><p>Kelola banyak akun Discord sekaligus. Tiap akun bisa pakai proxy sendiri.</p></li>
+      <li class="feat"><span class="feat-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><h3>Dashboard &amp; Log</h3><p>Pantau total post, tingkat sukses, grafik 7 hari, dan log lengkap.</p></li>
+      <li class="feat"><span class="feat-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17h5l-1.4-1.4A6.97 6.97 0 0 0 19 12a7 7 0 1 0-7 7c1.5 0 2.9-.5 4-1.3"/><path d="M12 7v5l3 3"/></svg></span><h3>Countdown Timer</h3><p>Lihat hitungan mundur ke post berikutnya di tiap channel secara real-time.</p></li>
+    </ul>
+  </section>
+
+  <section id="harga" class="land-sec land-pricing">
+    <h2 class="land-h2">Pilih Paket</h2>
+    <p class="land-lead">Harga transparan, tinggal pilih sesuai kebutuhan kamu.</p>
+    <ul class="price-grid">
+      <li class="price-card"><p class="price-name">Starter</p><p class="price-amt"><span class="price-cur">Rp</span>8<span class="price-k">rb</span><span class="price-per">/minggu</span></p><ul class="price-feat"><li>2 akun Discord</li><li>15 channel</li><li>Delay fleksibel</li></ul><a class="btn btn-ghost btn-block" href="https://wa.me/6282186928854">Pilih paket</a></li>
+      <li class="price-card price-card-pop"><p class="price-badge">Paling laris</p><p class="price-name">Pro</p><p class="price-amt"><span class="price-cur">Rp</span>25<span class="price-k">rb</span><span class="price-per">/bulan</span></p><ul class="price-feat"><li>8 akun Discord</li><li>150channel</li><li>Mode Bypass</li><li>Dashboard &amp; export CSV</li></ul><a class="btn btn-primary btn-block" href="https://wa.me/6282186928854">Pilih paket</a></li>
+      <li class="price-card"><p class="price-name">Agency</p><p class="price-amt"><span class="price-cur">Rp</span>85<span class="price-k">rb</span><span class="price-per">/3  bulan</span></p><ul class="price-feat"><li>30 akun discord</li><li>300 channel</li><li>Mode Bypas</li><li>Dashboard &amp; export CSV</li></ul><a class="btn btn-ghost btn-block" href="https://wa.me/6282186928854">Pilih paket</a></li>
+    </ul>
+  </section>
+
+  <section class="land-sec">
+    <h2 class="land-h2">Cara mulai</h2>
+    <ol class="steps">
+      <li class="step"><span class="step-n">1</span><div><h3>Beli key</h3><p>Hubungi owner, pilih paket durasi dan jumlah akun / channel.</p></div></li>
+      <li class="step"><span class="step-n">2</span><div><h3>Daftar</h3><p>Isi username, password, dan key kamu di form daftar.</p></div></li>
+      <li class="step"><span class="step-n">3</span><div><h3>Tambah akun &amp; jalanin</h3><p>Masukkan akun Discord, pilih channel, atur delay, lalu start.</p></div></li>
+    </ol>
+  </section>
+
+  <section id="kontak" class="land-sec land-contact">
+    <h2 class="land-h2">Hubungi Owner</h2>
+    <p class="land-lead">Mau beli key, tanya paket, atau ada kendala? Chat langsung aja.</p>
+    <div class="contact-list contact-static">
+      <a class="contact-item contact-item-whatsapp" href="https://wa.me/6282186928854" target="_blank" rel="noopener">
+        <span class="contact-platform-icon" style="--platform-color:#25D366" aria-hidden="true"><svg class="contact-platform-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.129.558 4.126 1.533 5.857L.057 23.857a.5.5 0 0 0 .619.633l6.19-1.63A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.861 0-3.609-.5-5.112-1.374l-.363-.214-3.76.991 1.009-3.68-.234-.381A9.943 9.943 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg></span>
+        <div class="contact-item-body"><b>WhatsApp</b><span>+6282186928854</span></div>
+        <svg class="contact-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a class="contact-item contact-item-telegram" href="https://t.me/lepost_id" target="_blank" rel="noopener">
+        <span class="contact-platform-icon" style="--platform-color:#229ED9" aria-hidden="true"><svg class="contact-platform-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.293 13.69l-2.981-.934c-.648-.204-.66-.648.136-.961l11.647-4.491c.54-.194 1.012.13.799.917z"/></svg></span>
+        <div class="contact-item-body"><b>Telegram</b><span>@lepost_id</span></div>
+        <svg class="contact-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a class="contact-item contact-item-discord" href="https://discord.com/users/799539882669244426" target="_blank" rel="noopener">
+        <span class="contact-platform-icon" style="--platform-color:#5865F2" aria-hidden="true"><svg class="contact-platform-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span>
+        <div class="contact-item-body"><b>Discord</b><span>@garox089</span></div>
+        <svg class="contact-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <footer class="land-foot">&copy; LePost &middot; Auto post Discord</footer>
+</div>
+
+<!-- APP -->
+<div id="app" hidden>
+  <header class="app-header">
+    <div class="topbar">
+      <button type="button" class="btn btn-icon sidebar-toggle" id="sidebar-toggle-btn" aria-label="Buka menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+      <div class="hdr-spacer"></div>
+      <div class="hdr-right">
+        <button id="hdr-lic" type="button" class="pill pill-off" data-act="open-lic" hidden></button>
+        <span id="hdr-status" class="pill pill-off" aria-live="polite"><span id="hdr-status-t">Memuat</span></span>
+        <button type="button" class="btn btn-icon btn-danger" data-act="logout" aria-label="Keluar">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+  <aside id="sidebar" class="sidebar" aria-label="Menu utama">
+    <div class="sidebar-header">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg></span>
+      <span class="sidebar-brand">LePost</span>
+      <button type="button" class="sidebar-close" id="sidebar-close-btn" aria-label="Tutup menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <nav class="sidebar-nav">
+      <ul class="sidebar-list">
+        <li id="nav-admin" hidden><button type="button" class="sidebar-item nav-btn sidebar-item--admin" data-act="open-admin"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Admin</span></button></li>
+        <li id="nav-admin-divider" class="sidebar-divider" hidden></li>
+        <li><a href="#dashboard" data-tab="dashboard" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></a></li>
+        <li><a href="#posts" data-tab="posts" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg><span>Auto Post</span></a></li>
+        <li><a href="#bypass" data-tab="bypass" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg><span>Bypass</span></a></li>
+        <li><a href="#logs" data-tab="logs" class="sidebar-item"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span>Log</span></a></li>
+        <li class="sidebar-divider"></li>
+        <li><button type="button" class="sidebar-item nav-btn" data-act="open-acc"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Akun</span></button></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <span id="sidebar-status" class="pill pill-off"><span id="sidebar-status-t">Memuat</span></span>
+    </div>
+  </aside>
+
+  <main id="main" class="wrap" tabindex="-1">
+    <section data-view="dashboard" aria-labelledby="dash-title">
+      <h2 id="dash-title" class="sr-only">Dashboard</h2>
+      <div class="hero" id="hero">
+        <div class="hero-main">
+          <p id="hero-date" class="eyebrow"></p>
+          <h3 id="hero-title" class="hero-title" aria-live="polite">Memuat data...</h3>
+          <p id="hero-sub" class="hero-sub"></p>
+          <button type="button" id="hero-retry" class="link-btn" data-act="refresh" hidden>Coba lagi</button>
+        </div>
+        <div id="ring" class="ring" role="img" aria-label="Tingkat sukses belum ada data">
+          <svg width="76" height="76" viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+            <circle class="ring-bg" cx="36" cy="36" r="30"/>
+            <circle id="ring-fg" class="ring-fg" cx="36" cy="36" r="30"/>
+          </svg>
+          <span id="ring-text" class="ring-text">-</span>
+          <span class="ring-label" aria-hidden="true">Sukses</span>
+        </div>
+      </div>
+      <div class="stats">
+        <article class="stat stat-hero">
+          <p class="stat-label">Total Post</p>
+          <p id="stat-total" class="stat-big tabnum">0</p>
+          <p id="stat-sub-total" class="stat-sub">&nbsp;</p>
+        </article>
+        <div class="stat-row">
+          <article id="card-active" class="stat">
+            <span class="stat-ic ic-green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+            <p id="stat-active" class="stat-num num-green tabnum">0</p>
+            <p class="stat-lbl">Aktif</p>
+            <p id="stat-sub-active" class="stat-sub">&nbsp;</p>
+          </article>
+          <article id="card-failed" class="stat">
+            <span class="stat-ic ic-red" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></span>
+            <p id="stat-failed" class="stat-num num-red tabnum">0</p>
+            <p class="stat-lbl">Gagal</p>
+            <p id="stat-sub-failed" class="stat-sub">&nbsp;</p>
+          </article>
+          <article id="card-accounts" class="stat">
+            <span class="stat-ic ic-violet" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M22 11h-6"/></svg></span>
+            <p id="stat-accounts" class="stat-num num-violet tabnum">0</p>
+            <p class="stat-lbl">Akun</p>
+            <p id="stat-sub-accounts" class="stat-sub">&nbsp;</p>
+          </article>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <section class="panel" aria-labelledby="p-act">
+          <div class="panel-head">
+            <div><h3 id="p-act" class="panel-title">Aktivitas 7 hari</h3><p id="chart-sum" class="panel-sub">Memuat...</p></div>
+            <div class="legend" aria-hidden="true"><span><i class="dot dot-ok"></i>Sukses</span><span><i class="dot dot-err"></i>Gagal</span></div>
+          </div>
+          <div id="chart" class="panel-body"></div>
+        </section>
+        <section class="panel" aria-labelledby="p-run">
+          <div class="panel-head">
+            <h3 id="p-run" class="panel-title">Berjalan</h3>
+            <span class="pill pill-on">Live</span>
+          </div>
+          <div id="dash-running" class="panel-body run-list"></div>
+        </section>
+      </div>
+      <section class="panel" aria-labelledby="p-log" style="margin-top:12px">
+        <div class="panel-head">
+          <h3 id="p-log" class="panel-title">Log terbaru</h3>
+          <a class="link" href="#logs">Lihat semua</a>
+        </div>
+        <div id="dash-log-list"></div>
+      </section>
+    </section>
+
+    <section data-view="posts" aria-labelledby="posts-title" hidden>
+      <div class="sec-head">
+        <div class="sec-head-top">
+          <div><h2 id="posts-title" class="sec-title">Auto Post</h2><p id="count-auto" class="sec-sub">Memuat...</p></div>
+          <div id="filter-auto" class="acc-filter acc-filter--head"></div>
+        </div>
+        <div class="sec-actions">
+          <button type="button" id="btn-toggle-auto" class="btn btn-start" data-act="toggle-all" data-type="auto">Start semua</button>
+          <button type="button" class="btn btn-primary" data-act="new-post">+ Tambah Post</button>
+        </div>
+      </div>
+      <div id="q-list-auto" class="qlist"></div>
+    </section>
+
+    <section data-view="bypass" aria-labelledby="bypass-title" hidden>
+      <div class="sec-head">
+        <div><h2 id="bypass-title" class="sec-title">Bypass</h2><p id="count-bypass" class="sec-sub">Memuat...</p></div>
+        <div class="sec-actions">
+          <button type="button" id="btn-toggle-bypass" class="btn btn-start" data-act="toggle-all" data-type="bypass">Start semua</button>
+          <button type="button" class="btn btn-primary" data-act="new-bypass">+ Tambah Bypass</button>
+        </div>
+      </div>
+      <div id="q-list-bypass" class="qlist"></div>
+    </section>
+
+    <section data-view="logs" aria-labelledby="logs-title" hidden>
+      <div class="sec-head">
+        <div><h2 id="logs-title" class="sec-title">Log Aktivitas</h2><p id="log-count" class="sec-sub">&nbsp;</p></div>
+      </div>
+      <div class="logbar">
+        <div class="seg" id="log-seg" role="group" aria-label="Filter status log">
+          <button type="button" data-l="ALL" aria-pressed="true">Semua</button>
+          <button type="button" data-l="SUCCESS" aria-pressed="false">Sukses</button>
+          <button type="button" data-l="ERROR" aria-pressed="false">Error</button>
+          <button type="button" data-l="INFO" aria-pressed="false">Info</button>
+        </div>
+        <div class="field"><label for="log-q" class="sr-only">Cari log</label><input id="log-q" type="search" class="input" placeholder="Cari log..." autocomplete="off"></div>
+        <button type="button" class="btn" data-act="export-csv"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Unduh CSV</button>
+      </div>
+      <div id="log-body"></div>
+    </section>
+  </main>
+</div>
+
+<!-- DIALOG: POST -->
+<div id="dlg-post" class="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-post-title">
+    <div class="dlg-head"><h2 id="dlg-post-title" class="dlg-title">Buat Post</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-post" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <form id="form-post" class="stack" novalidate>
+      <input type="hidden" id="post-id">
+      <div class="field"><label class="label" for="post-acc">Akun</label><select id="post-acc" class="select" data-autofocus></select></div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="post-guild">Server</label><select id="post-guild" class="select" disabled></select></div>
+        <div class="field"><label class="label" for="post-ch-search">Channel</label><input id="post-ch-search" type="search" class="input" placeholder="Cari channel" autocomplete="off"><select id="post-channel" class="select" disabled></select></div>
+      </div>
+      <div class="field"><label class="label" for="post-content">Pesan</label><textarea id="post-content" class="textarea" rows="3" placeholder="Isi pesan..."></textarea></div>
+      <div class="grid-2"><div class="field"><label class="label" for="post-delay">Delay (menit)</label><input id="post-delay" class="input" type="number" min="1" value="5" inputmode="numeric"></div><div class="field"><label class="label" for="post-delay-random">Random ± (menit)</label><input id="post-delay-random" class="input" type="number" min="0" max="60" value="0" inputmode="numeric" placeholder="0 = nonaktif"></div></div>
+      <div class="field-box field"><label class="label" for="post-webhook-url">Webhook (opsional)</label><input id="post-webhook-url" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"><p class="hint">Disimpan di perangkat ini untuk pengisian berikutnya.</p></div>
+      <div class="dlg-actions"><button type="submit" class="btn btn-primary btn-block">Simpan Post</button><button type="button" class="btn btn-block" data-act="close" data-dialog="dlg-post">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- DIALOG: BYPASS -->
+<div id="dlg-bypass" class="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-bypass-title">
+    <div class="dlg-head"><h2 id="dlg-bypass-title" class="dlg-title">Buat Bypass</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-bypass" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <form id="form-bypass" class="stack" novalidate>
+      <input type="hidden" id="bypass-id">
+      <fieldset class="field-set">
+        <legend class="label">Pilih akun <span class="muted">(minimal 2)</span></legend>
+        <div class="set-tools"><span id="bypass-count" class="hint">0 akun dipilih</span><button type="button" class="link-btn" data-act="select-all">Pilih semua</button></div>
+        <div id="bypass-accounts" class="pick-list"></div>
+      </fieldset>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="bypass-guild">Server</label><select id="bypass-guild" class="select" disabled></select></div>
+        <div class="field"><label class="label" for="bypass-ch-search">Channel</label><input id="bypass-ch-search" type="search" class="input" placeholder="Cari channel" autocomplete="off"><select id="bypass-channel" class="select" disabled></select></div>
+      </div>
+      <div class="grid-2">
+        <div class="field"><label class="label" for="bypass-total-slowmode">Total slowmode (menit)</label><input id="bypass-total-slowmode" class="input" type="number" min="1" value="120" inputmode="numeric"></div>
+        <div class="field"><label class="label" for="bypass-delay">Delay per akun (menit)</label><input id="bypass-delay" class="input" type="number" value="60" readonly aria-describedby="bypass-delay-hint"><p id="bypass-delay-hint" class="hint">Dihitung otomatis dari total slowmode.</p></div>
+      </div>
+      <div class="dlg-actions"><button type="submit" class="btn btn-primary btn-block">Simpan Bypass</button><button type="button" class="btn btn-block" data-act="close" data-dialog="dlg-bypass">Batal</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- DIALOG: AKUN -->
+<div id="dlg-acc" class="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-acc-title">
+    <div class="dlg-head"><h2 id="dlg-acc-title" class="dlg-title">Kelola Akun</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-acc" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div id="acc-list" class="acc-list"></div>
+    <form id="form-acc" class="acc-form">
+      <h3>Tambah akun baru</h3>
+      <div class="field"><label class="label" for="acc-label">Nama akun</label><input id="acc-label" class="input" data-autofocus autocomplete="off" placeholder="Contoh: akun utama"></div>
+      <div class="field"><label class="label" for="acc-token">Discord token</label><input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun"></div>
+      <div class="field"><label class="label" for="acc-proxy">Proxy (opsional)</label><input id="acc-proxy" class="input" autocomplete="off" placeholder="socks5://user:pass@host:port"></div>
+      <button type="submit" class="btn btn-primary btn-block">Simpan Akun</button>
+    </form>
+  </div>
+</div>
+
+<!-- DIALOG: EDIT TOKEN -->
+<div id="dlg-edit-token" class="overlay" hidden>
+  <div class="dlg dlg-sm" role="dialog" aria-modal="true" aria-labelledby="dlg-edit-token-title">
+    <div class="dlg-head"><h2 id="dlg-edit-token-title" class="dlg-title">Ganti Token</h2><button type="button" class="btn btn-icon" data-act="close-edit-token" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <p class="hint" style="margin-bottom:12px">Akun: <strong id="edit-token-label"></strong></p>
+    <form id="form-edit-token" class="stack" novalidate>
+      <div class="field"><label class="label" for="edit-token-input">Token baru</label><input id="edit-token-input" class="input" type="password" autocomplete="off" placeholder="Paste token Discord baru di sini"></div>
+      <p class="hint">Token baru akan dicek dulu ke Discord.</p>
+      <button type="submit" class="btn btn-primary btn-block">Simpan Token Baru</button>
+    </form>
+  </div>
+</div>
+
+<!-- DIALOG: ADMIN -->
+<div id="dlg-admin" class="overlay" hidden>
+  <div class="dlg dlg-wide" role="dialog" aria-modal="true" aria-labelledby="dlg-admin-title">
+    <div class="dlg-head"><h2 id="dlg-admin-title" class="dlg-title">Panel Admin</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-admin" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="seg" role="group" aria-label="Menu admin" style="margin-bottom:16px">
+      <button type="button" data-atab="keys" aria-pressed="true">Key</button>
+      <button type="button" data-atab="users" aria-pressed="false">User</button>
+      <button type="button" data-atab="stats" aria-pressed="false">Statistik</button>
+      <button type="button" data-atab="broadcast" aria-pressed="false">Broadcast</button>
+      <button type="button" data-atab="blacklist" aria-pressed="false">Blacklist IP</button>
+    </div>
+    <div id="atab-keys">
+      <form id="form-key" class="acc-form" style="border-top:0;padding-top:0">
+        <h3>Buat key baru</h3>
+        <div class="two-col">
+          <div class="field"><label class="label" for="key-days">Durasi (hari)</label><input id="key-days" class="input" type="number" min="1" max="3650" value="30" inputmode="numeric"></div>
+          <div class="field"><label class="label" for="key-count">Jumlah key</label><input id="key-count" class="input" type="number" min="1" max="100" value="1" inputmode="numeric"></div>
+          <div class="field"><label class="label" for="key-acc">Limit akun</label><input id="key-acc" class="input" type="number" min="0" value="1" inputmode="numeric"></div>
+          <div class="field"><label class="label" for="key-ch">Limit channel</label><input id="key-ch" class="input" type="number" min="0" value="5" inputmode="numeric"></div>
+        </div>
+        <div class="field"><label class="label" for="key-note">Catatan (opsional)</label><input id="key-note" class="input" maxlength="64" autocomplete="off"></div>
+        <p class="hint">Isi 0 di limit = tanpa batas.</p>
+        <div class="two-col">
+          <div class="field"><label class="label"><input type="checkbox" id="key-bypass"> Allow Bypass</label></div>
+          <div class="field"><label class="label"><input type="checkbox" id="key-dashboard"> Allow Dashboard</label></div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Generate Key</button>
+      </form>
+      <div id="key-new" class="key-new" hidden></div>
+      <h3 class="sub-h">Daftar key</h3>
+      <div id="key-list" class="acc-list"></div>
+    </div>
+    <div id="atab-users" hidden><div id="user-list" class="acc-list"></div></div>
+    <div id="atab-stats" hidden>
+      <div id="admin-stats-box" class="acc-list"><p class="hint">Memuat statistik...</p></div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-sm" data-act="export-users-csv">Export User CSV</button>
+        <button type="button" class="btn btn-sm btn-danger" data-act="admin-stop-all">Stop Semua Query (Global)</button>
+        <button type="button" class="btn btn-sm btn-warn" onclick="triggerExpiryNotify()">Kirim Notif H-3</button>
+      </div>
+    </div>
+    
+    <div id="atab-blacklist" hidden>
+      <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <input id="bl-ip" class="inp" placeholder="IP Address" style="flex:1;min-width:120px">
+        <input id="bl-reason" class="inp" placeholder="Alasan (opsional)" style="flex:2;min-width:150px">
+        <button type="button" class="btn btn-danger btn-sm" data-act="ban-ip">Ban IP</button>
+      </div>
+      <div id="blacklist-list" class="acc-list"><p class="hint">Memuat...</p></div>
+    </div>
+<div id="atab-broadcast" hidden>
+      <form id="form-broadcast" class="acc-form" style="border-top:0;padding-top:0">
+        <h3>Broadcast ke semua user</h3>
+        <p class="hint" style="margin-bottom:12px">Pesan tampil sebagai notifikasi di dashboard setiap user.</p>
+        <div class="field"><label class="label" for="bc-msg">Pesan</label><textarea id="bc-msg" class="textarea" rows="4" maxlength="500" placeholder="Contoh: Server maintenance malam ini pukul 23:00 WIB"></textarea></div>
+        <div class="field"><label class="label" for="bc-type">Tipe</label><select id="bc-type" class="input"><option value="info">Info (biru)</option><option value="warn">Peringatan (kuning)</option><option value="danger">Penting (merah)</option></select></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <button type="submit" class="btn btn-primary">Kirim Broadcast</button>
+          <button type="button" class="btn btn-sm btn-danger" data-act="clear-broadcast">Hapus Broadcast Aktif</button>
+        </div>
+      </form>
+      <div id="bc-current" class="acc-list" style="margin-top:16px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DIALOG: LISENSI -->
+<div id="dlg-lic" class="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dlg-lic-title">
+    <div class="dlg-head"><h2 id="dlg-lic-title" class="dlg-title">Lisensi Kamu</h2><button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-lic" aria-label="Tutup"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div id="lic-info" class="acc-list"></div>
+    <form id="form-redeem" class="acc-form">
+      <h3>Perpanjang / upgrade</h3>
+      <div class="field"><label class="label" for="redeem-key">Masukkan key baru</label><input id="redeem-key" class="input" autocomplete="off" autocapitalize="characters" placeholder="LP-XXXX-XXXX-XXXX-XXXX"></div>
+      <button type="submit" class="btn btn-primary btn-block">Pakai Key</button>
+      <div id="lic-contact" class="contact-list"></div>
+    </form>
+  </div>
+</div>
+
+<!-- DIALOG: KONFIRMASI -->
+<div id="dlg-acc-filter" class="overlay" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="acc-filter-dlg-title" style="max-width:320px">
+    <h2 id="acc-filter-dlg-title" class="dlg-title">Pilih Akun</h2>
+    <div id="acc-filter-dlg-list" class="acc-dlg-list"></div>
+    <div class="dlg-actions" style="margin-top:14px">
+      <button type="button" class="btn btn-block" data-dialog="dlg-acc-filter" data-act="close">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div id="dlg-confirm" class="overlay" hidden>
+  <div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-msg" style="max-width:380px">
+    <h2 id="confirm-title" class="dlg-title"></h2>
+    <p id="confirm-msg" class="dlg-msg"></p>
+    <div class="dlg-actions dlg-actions-row" style="margin-top:18px">
+      <button id="confirm-no" type="button" class="btn" data-autofocus>Batal</button>
+      <button id="confirm-ok" type="button" class="btn btn-stop">OK</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite">
+  <span class="toast-dot" aria-hidden="true"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<script src="/static/app.js?v=23"></script>
+</body>
+</html>
