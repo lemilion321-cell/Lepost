@@ -13,7 +13,7 @@ from datetime import timedelta
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import Request, APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, text
 from sqlalchemy.orm import Session
 
