@@ -1881,5 +1881,6 @@ async function boot() {
   }).catch(() => {
     // api() sudah handle 401 dengan memanggil logout() langsung, abaikan error lain
   }), 15000);
+  setInterval(loadBroadcastBanner, 15000);
 }
 boot();
