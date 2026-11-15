@@ -745,7 +745,7 @@ button.pill { cursor: pointer; font: inherit; }
 .acc-filter-icon{flex-shrink:0;width:15px;height:15px}
 .acc-filter-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acc-filter-caret{
-  flex-shrink:0;width:10px;height:10px;margin-left:2px;
+  flex-shrink:0;width:10px;height:10px;margin-left:auto;
   color:var(--muted);
   transition:transform .2s var(--ease);
 }
