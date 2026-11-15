@@ -1005,3 +1005,31 @@ def dismiss_user_broadcast(bc_id: int, user: User = Depends(current_user), db: S
         ubc.dismissed = True
         db.commit()
     return {"ok": True}
+
+# ─────────────────────────── admin: trigger notif H-3 manual ───────────────────────────
+@router.post("/admin/trigger-expiry-notify")
+def admin_trigger_expiry_notify(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Admin trigger manual cek H-3 lisensi -> buat UserBroadcast."""
+    if not user.is_admin:
+        raise HTTPException(403)
+    from app.models import UserLicense, utcnow as _utcnow
+    THREE_DAYS = 3 * 24 * 3600
+    now = _utcnow()
+    uls = db.query(UserLicense).filter(UserLicense.expires_at.isnot(None)).all()
+    count = 0
+    for ul in uls:
+        secs = (ul.expires_at - now).total_seconds()
+        if secs <= 0 or secs > THREE_DAYS:
+            continue
+        existing = db.query(UserBroadcast).filter_by(user_id=ul.user_id, dismissed=False).first()
+        if existing:
+            continue
+        days_left = int(secs // 86400) + 1
+        msg = (
+            f"⚠️ Lisensi kamu akan habis dalam {days_left} hari! "
+            f"Segera perpanjang agar akun tetap aktif."
+        )
+        db.add(UserBroadcast(user_id=ul.user_id, message=msg, type="warn"))
+        count += 1
+    db.commit()
+    return {"ok": True, "notified": count}
