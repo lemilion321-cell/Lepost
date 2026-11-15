@@ -1719,7 +1719,6 @@ async function delQ(id) {
   const q = state.queries.find(x => x.id === id);
   if (!(await ask('Hapus query ini?', chn(q?.channel_name), 'Hapus'))) return;
   try { await api(`/queries/${id}`, { method: 'DELETE' }); toast('Query dihapus.'); refreshNow(); } catch(e) { toast(e.message || 'Gagal hapus query.', true); return; }
-  catch (e) { toast(e.message, true); }
 }
 
 async function toggleAll(type) {
