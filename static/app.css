@@ -716,76 +716,86 @@ button.pill { cursor: pointer; font: inherit; }
 .acc-pill{padding:.25rem .75rem;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:.8rem;cursor:pointer;transition:background .15s,color .15s}
 .acc-pill.active,.acc-pill:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
-/* filter akun dropdown — custom */
+/* filter akun dropdown — serasi LePost v3 */
 .acc-filter-wrap{position:relative;display:inline-block;margin-bottom:.75rem}
 .acc-filter-btn{
   display:flex;align-items:center;gap:.5rem;
-  min-width:160px;max-width:240px;
-  padding:.42rem .75rem .42rem .6rem;
-  background:rgba(88,101,242,.10);
-  border:1px solid rgba(88,101,242,.35);
-  border-radius:10px;
+  min-width:170px;
+  height:var(--tap);
+  padding:0 12px 0 10px;
+  background:var(--raised);
+  border:1px solid var(--line);
+  border-radius:var(--r);
   cursor:pointer;
-  font-size:.85rem;font-weight:600;color:var(--text);
-  transition:background .18s,border-color .18s,box-shadow .18s;
+  font-size:.85rem;font-weight:600;
+  color:var(--text2);
+  transition:background .15s,border-color .15s,color .15s;
   user-select:none;
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
 }
 .acc-filter-btn:hover{
-  background:rgba(88,101,242,.18);
-  border-color:rgba(88,101,242,.6);
-  box-shadow:0 0 0 3px rgba(88,101,242,.12);
+  background:#222630;
+  border-color:#2e3340;
+  color:var(--text);
 }
 .acc-filter-btn.open{
-  background:rgba(88,101,242,.22);
-  border-color:rgba(88,101,242,.75);
-  box-shadow:0 0 0 3px rgba(88,101,242,.18);
+  background:#222630;
+  border-color:var(--flame-line);
+  color:var(--text);
 }
-.acc-filter-icon{flex-shrink:0;width:16px;height:16px;opacity:.85}
+.acc-filter-icon{flex-shrink:0;width:15px;height:15px}
 .acc-filter-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acc-filter-caret{margin-left:auto;flex-shrink:0;font-size:.7rem;opacity:.6;transition:transform .2s}
+.acc-filter-caret{
+  flex-shrink:0;width:10px;height:10px;margin-left:2px;
+  color:var(--muted);
+  transition:transform .2s var(--ease);
+}
 .acc-filter-btn.open .acc-filter-caret{transform:rotate(180deg)}
 .acc-filter-dropdown{
-  position:absolute;top:calc(100% + 6px);left:0;
+  position:absolute;top:calc(100% + 5px);left:0;
   min-width:100%;
-  background:rgba(17,19,24,.96);
-  border:1px solid rgba(88,101,242,.4);
-  border-radius:10px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:var(--r);
   overflow:hidden;
-  box-shadow:0 8px 32px rgba(0,0,0,.55),0 0 0 1px rgba(88,101,242,.1);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
+  box-shadow:0 8px 24px rgba(0,0,0,.45);
   z-index:999;
-  opacity:0;transform:translateY(-6px) scale(.97);
+  opacity:0;transform:translateY(-4px);
   pointer-events:none;
-  transition:opacity .18s,transform .18s;
+  transition:opacity .15s var(--ease),transform .15s var(--ease);
 }
 .acc-filter-dropdown.open{
-  opacity:1;transform:translateY(0) scale(1);
+  opacity:1;transform:translateY(0);
   pointer-events:all;
 }
 .acc-filter-opt{
-  display:flex;align-items:center;gap:.55rem;
-  padding:.48rem .75rem;
+  display:flex;align-items:center;gap:.5rem;
+  padding:0 12px;height:38px;
   font-size:.83rem;cursor:pointer;
-  transition:background .12s;
+  transition:background .1s;
   white-space:nowrap;
   color:var(--text2);
+  border-bottom:1px solid var(--line-soft);
 }
-.acc-filter-opt:hover{background:rgba(88,101,242,.15);color:var(--text)}
+.acc-filter-opt:last-child{border-bottom:0}
+.acc-filter-opt:hover{background:var(--raised);color:var(--text)}
 .acc-filter-opt.selected{
-  background:rgba(88,101,242,.2);
-  color:#fff;font-weight:600;
+  color:var(--flame-hi);
+  background:var(--flame-soft);
 }
-.acc-filter-opt-icon{width:14px;height:14px;flex-shrink:0;opacity:.7}
-.acc-filter-opt.selected .acc-filter-opt-icon{opacity:1}
+.acc-filter-opt-icon{width:13px;height:13px;flex-shrink:0;opacity:.55}
+.acc-filter-opt.selected .acc-filter-opt-icon{opacity:.9}
 .acc-filter-badge{
   margin-left:auto;
   font-size:.7rem;font-weight:700;
-  background:rgba(88,101,242,.25);
-  color:rgba(88,101,242,1);
+  background:var(--raised);
+  color:var(--muted);
+  border:1px solid var(--line);
   border-radius:999px;
-  padding:.05rem .4rem;
-  min-width:1.4rem;text-align:center;
+  padding:.05rem .45rem;
+  min-width:1.5rem;text-align:center;
+}
+.acc-filter-opt.selected .acc-filter-badge{
+  background:var(--flame-soft);
+  color:var(--flame-hi);
+  border-color:var(--flame-line);
 }
