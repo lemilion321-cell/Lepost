@@ -854,3 +854,27 @@ button.pill { cursor: pointer; font: inherit; }
 .sidebar-divider{height:1px;background:var(--line-soft);margin:.4rem .8rem;list-style:none}
 .sidebar-item--admin{color:var(--flame-hi)!important}
 .sidebar-item--admin .ico{color:var(--flame-hi)}
+
+/* force sidebar nav-btn sejajar */
+.sidebar-list .nav-btn,
+.sidebar-list .sidebar-item.nav-btn {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: .75rem !important;
+  min-height: unset !important;
+  padding: .75rem 1.2rem !important;
+  font-size: .925rem !important;
+  font-weight: 500 !important;
+  width: 100% !important;
+  color: var(--text2) !important;
+}
+.sidebar-list .nav-btn:hover {
+  background: var(--surface2) !important;
+  color: var(--text) !important;
+}
+.sidebar-list .nav-btn .ico {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+}
