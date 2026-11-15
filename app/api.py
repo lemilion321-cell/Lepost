@@ -452,16 +452,36 @@ def check_rate_limit(ip):
             del _login_attempts[ip]
             entry = None
 
+AUTO_BAN_LOCKOUT_THRESHOLD = 3
+
+def _auto_ban_ip(ip: str):
+    """Simpan IP ke tabel ip_blacklist kalau belum ada."""
+    try:
+        db = SessionLocal()
+        try:
+            existing = db.query(IPBlacklist).filter_by(ip=ip).first()
+            if not existing:
+                db.add(IPBlacklist(ip=ip, reason="Auto-ban: too many failed logins"))
+                db.commit()
+                _blacklist_cache.add(ip)
+        finally:
+            db.close()
+    except Exception:
+        log.exception("_auto_ban_ip error")
+
 def record_failed_login(ip):
     from datetime import datetime, timedelta
     now = datetime.utcnow()
     entry = _login_attempts.get(ip)
     if not entry or (now - entry["first_attempt"]).total_seconds() > RATE_LIMIT_WINDOW:
-        _login_attempts[ip] = {"count": 1, "first_attempt": now, "locked_until": None}
+        _login_attempts[ip] = {"count": 1, "first_attempt": now, "locked_until": None, "lockout_count": 0}
     else:
         entry["count"] += 1
         if entry["count"] >= RATE_LIMIT_MAX:
             entry["locked_until"] = now + timedelta(seconds=RATE_LIMIT_LOCKOUT)
+            entry["lockout_count"] = entry.get("lockout_count", 0) + 1
+            if entry["lockout_count"] >= AUTO_BAN_LOCKOUT_THRESHOLD:
+                _auto_ban_ip(ip)
 
 def reset_rate_limit(ip):
     _login_attempts.pop(ip, None)
