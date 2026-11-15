@@ -274,9 +274,18 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=6, max_length=128)
 
 
+
+    @validator('username')
+    def username_valid(cls, v):
+        import re
+        v = v.strip()
+        if not re.match(r'^[a-zA-Z0-9_]+$', v):
+            raise ValueError('Username hanya boleh huruf, angka, dan underscore')
+        return v
+
 class LoginIn(BaseModel):
-    username: str
-    password: str
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=128)
 
 
 class SignupIn(BaseModel):
