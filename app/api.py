@@ -439,7 +439,7 @@ def reset_rate_limit(ip):
 
 @router.post("/login")
 def login(request: Request, inp: LoginIn, db: Session = Depends(get_db)):
-    client_ip = request.client.host
+    client_ip = request.headers.get('x-forwarded-for', request.client.host).split(',')[0].strip()
     check_rate_limit(client_ip)
     u = db.query(User).filter_by(username=inp.username).first()
     if not u or not verify_pw(inp.password, u.password_hash):
