@@ -1926,6 +1926,7 @@ async function boot() {
   const app = $('app');
   if (app) app.hidden = false;
   if (!TABS.includes(location.hash.replace('#', ''))) history.replaceState(null, '', '#dashboard');
+  showTab(currentRoute());
   try { state.me = await api('/me'); } catch { return; }
   renderMe();
   if (!state.me.is_admin) {
