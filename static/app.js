@@ -3,7 +3,7 @@
    Perbaikan: /me, /public, /signup, /redeem, /admin/*, broadcast, grafik, undefined. */
 
 const API = '/api';
-const TABS = ['dashboard', 'posts', 'bypass', 'logs', 'accounts', 'admin'];
+const TABS = ['dashboard', 'posts', 'bypass', 'logs'];
 const REFRESH_MS = 10000;
 
 const state = {
@@ -380,7 +380,7 @@ function setAdminTab(tab) {
   else loadAdminKeys();
 }
 
-function openAdmin(opener) { location.hash = '#admin'; }
+function openAdmin(opener) { openDialog('dlg-admin', opener); setAdminTab('keys'); }
 
 const fmtDate = iso => iso
   ? new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -720,15 +720,12 @@ function showTab(tab) {
   });
   loadStats();
   loadView(tab);
-  if (tab === 'accounts') loadAccounts().then(loadAccountsPage);
 }
 window.addEventListener('hashchange', () => { window.scrollTo(0, 0); showTab(currentRoute()); });
 
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
   if (tab === 'logs') return loadLogs();
-  if (tab === 'accounts') return loadAccountsPage();
-  if (tab === 'admin') return loadAdminPage();
   return loadQueries();
 }
 function refreshNow() {
@@ -1154,8 +1151,31 @@ async function submitEditToken(e) {
   finally { setBusy(btn, false); }
 }
 
-function openAccounts(opener) { location.hash = '#accounts'; }
+function openAccounts(opener) {
+  renderAccountList();
+  openDialog('dlg-acc', opener);
+}
 
+async function submitAccount(e) {
+  e.preventDefault();
+  const label = $('acc-label').value.trim();
+  const token = $('acc-token').value.trim();
+  const proxy = $('acc-proxy').value.trim();
+  if (!label || !token) return toast('Nama akun dan token wajib diisi.', true);
+  const btn = e.submitter || e.target.querySelector('[type=submit]');
+  setBusy(btn, true);
+  try {
+    await api('/accounts', { method: 'POST', body: JSON.stringify({ label, token, proxy }) });
+    e.target.reset();
+    await loadAccounts();
+    renderAccountList();
+    loadStats();
+    toast('Akun ditambahkan.');
+  } catch (err) { toast(err.message, true); }
+  finally { setBusy(btn, false); }
+}
+
+/* ───────── channel ───────── */
 function resetChannels(mode) {
   state.channels[mode] = [];
   const search = $(`${mode}-ch-search`);
@@ -2034,52 +2054,6 @@ async function banIP() {
 }
 
 /* ── Sidebar ── */
-
-function loadAccountsPage(){
-  const box=document.getElementById('acc-list-page'),cnt=document.getElementById('count-accounts');
-  if(!box)return;
-  if(!state.accounts||!state.accounts.length){
-    if(cnt)cnt.textContent='0 akun terdaftar';
-    box.innerHTML='<div class="empty"><h3>Belum ada akun Discord</h3><p>Tambahkan akun dengan token Discord.</p><button type="button" class="btn btn-primary" data-act="new-acc">+ Tambah akun pertama</button></div>';
-    return;
-  }
-  if(cnt)cnt.textContent=state.accounts.length+' akun terdaftar';
-  box.innerHTML=state.accounts.map(a=>`<div class="acc-row"><div class="acc-id"><span class="avatar" aria-hidden="true">${esc((a.label||'?').charAt(0).toUpperCase())}</span><div class="acc-text"><p class="acc-name">${esc(a.label)}</p><p class="acc-meta">@${esc(a.dc_user||'?')}${a.proxy?' · proxy':''}</p></div></div><div class="acc-actions"><button type="button" class="btn btn-icon btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" title="Ganti token">${icon('key')}</button><button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}">${icon('trash')}</button></div></div>`).join('');
-}
-
-function loadAdminPage(){_setAdminPageTab('keys');}
-
-function _setAdminPageTab(tab){
-  document.querySelectorAll('.admin-ptab').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.atab2===tab)));
-  ['keys','users','stats','broadcast','blacklist'].forEach(t=>{const el=document.getElementById('admin-page-'+t);if(el)el.hidden=(t!==tab);});
-  _loadAdminPageTab(tab);
-}
-
-function _loadAdminPageTab(tab){
-  const pane=document.getElementById('admin-page-'+tab);
-  if(!pane)return;
-  const idMap={keys:'atab-keys',users:'atab-users',stats:'admin-stats-box',broadcast:'atab-broadcast',blacklist:'atab-blacklist'};
-  const origId=idMap[tab];
-  const orig=origId?document.getElementById(origId):null;
-  if(orig)orig.id=origId+'-bak';
-  const fake=document.createElement('div');
-  fake.id=origId||'admin-page-tmp';
-  document.body.appendChild(fake);
-  let p;
-  if(tab==='keys')p=loadAdminKeys();
-  else if(tab==='users')p=loadAdminUsers();
-  else if(tab==='stats')p=loadAdminStats();
-  else if(tab==='broadcast')p=loadBroadcastCurrent();
-  else if(tab==='blacklist')p=loadBlacklist();
-  const done=()=>{pane.innerHTML=fake.innerHTML;document.body.removeChild(fake);if(orig)orig.id=origId;};
-  if(p&&p.then)p.then(done).catch(done);else done();
-}
-
-document.addEventListener('click',function(e2){
-  const pt=e2.target.closest('.admin-ptab');
-  if(pt)_setAdminPageTab(pt.dataset.atab2);
-});
-
 (function(){
   function openSidebar(){
     document.getElementById('sidebar')?.classList.add('open');

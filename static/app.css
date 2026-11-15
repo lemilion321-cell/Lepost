@@ -879,7 +879,3 @@ button.pill { cursor: pointer; font: inherit; }
   height: 18px !important;
   flex-shrink: 0 !important;
 }
-
-.admin-ptab{background:var(--surface2,#1a1b22);color:var(--text2,#aaa);border:1px solid var(--border,#2a2b35);border-radius:.5rem;padding:.45rem 1rem;font-size:.875rem;font-weight:500;cursor:pointer;transition:background .15s,color .15s;}
-.admin-ptab[aria-pressed="true"]{background:var(--accent,#d97706);color:#fff;border-color:transparent;}
-.count-sub{font-size:.8rem;color:var(--text2,#888);margin-top:.15rem;}
