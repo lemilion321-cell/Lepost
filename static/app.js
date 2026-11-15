@@ -1727,7 +1727,7 @@ document.addEventListener('click', e => {
   if (!el || el.disabled) return;
   const id = Number(el.dataset.id);
   switch (el.dataset.act) {
-    case 'logout':           return logout();
+    case 'logout':           if (confirm('Yakin mau logout?')) logout(); return;
     case 'open-admin':       return openAdmin(el);
     case 'open-lic':         return openLicense(el);
     case 'copy-key':         return copyText(el.dataset.key);
