@@ -893,3 +893,23 @@ button.pill { cursor: pointer; font: inherit; }
 
 /* log terbaru: max height + scroll */
 #dash-log-list { max-height:260px; overflow-y:auto; }
+
+/* acc-pills */
+.acc-pills { display:flex; flex-wrap:wrap; gap:6px; padding:4px 0 8px; }
+.acc-pill {
+  background:transparent;
+  border:1px solid var(--border,rgba(255,255,255,.1));
+  color:var(--tx2,#aaa);
+  border-radius:999px;
+  padding:4px 14px;
+  font-size:.8rem;
+  cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;
+}
+.acc-pill:hover { border-color:var(--accent,#c87941); color:var(--tx,#fff); }
+.acc-pill--active {
+  background:var(--accent,#c87941);
+  border-color:var(--accent,#c87941);
+  color:#fff;
+  font-weight:600;
+}
