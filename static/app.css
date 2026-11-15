@@ -879,3 +879,17 @@ button.pill { cursor: pointer; font: inherit; }
   height: 18px !important;
   flex-shrink: 0 !important;
 }
+
+/* run-flat: daftar berjalan polos sejajar */
+.run-flat { list-style:none; margin:0; padding:0; }
+.run-flat-item {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border,rgba(255,255,255,.07));
+}
+.run-flat-item:last-child { border-bottom:none; }
+.run-flat-name { flex:1; font-size:.875rem; font-weight:500; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.run-flat-cd { font-size:.75rem; color:var(--tx2); white-space:nowrap; }
+
+/* log terbaru: max height + scroll */
+#dash-log-list { max-height:260px; overflow-y:auto; }

@@ -996,16 +996,14 @@ async function loadDashQueries() {
     const act = list.filter(q => q.status === 'active');
     if (!changed('run', act)) { tickCountdown(); return; }
     box.innerHTML = act.length
-      ? act.map(q => {
+      ? `<ul class="run-flat">${act.map(q => {
           const bypass = q.query_type === 'bypass';
-          return `<div class="run-item">
-            <div class="run-top">
-              <span class="run-name">${esc(chn(q.channel_name) || '#channel')}</span>
-              <span class="tag ${bypass ? 'tag-bypass' : 'tag-auto'}">${bypass ? 'Bypass' : 'Auto'}</span>
-            </div>
-            <p class="cd js-count" data-active="1" data-next="${nextOf(q)}"></p>
-          </div>`;
-        }).join('')
+          return `<li class="run-flat-item">
+            <span class="run-flat-name">${esc(chn(q.channel_name) || '#channel')}</span>
+            <span class="tag ${bypass ? 'tag-bypass' : 'tag-auto'}">${bypass ? 'Bypass' : 'Auto'}</span>
+            <span class="cd js-count run-flat-cd" data-active="1" data-next="${nextOf(q)}"></span>
+          </li>`;
+        }).join('')}</ul>`
       : inlineEmpty('Belum ada yang berjalan.', 'Tekan Start di Auto Post atau Bypass.');
     tickCountdown();
   } catch (e) {
@@ -1028,7 +1026,7 @@ async function loadDashLogs() {
   const box = $('dash-log-list');
   if (!box) return;
   try {
-    const list = await api('/logs?limit=6');
+    const list = await api('/logs?limit=5');
     if (!changed('dlog', list)) return;
     box.innerHTML = list.length
       ? `<ul class="loglist">${list.map(logItem).join('')}</ul>`
