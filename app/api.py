@@ -811,6 +811,8 @@ def update_query(qid: int, data: QueryPatch, user: User = Depends(current_user),
 @router.delete("/queries/{qid}")
 def del_query(qid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     q = _get_query(db, qid, user)
+    q.status = "stopped"
+    db.commit()
     db.query(Log).filter(Log.query_id == qid).delete()
     db.delete(q)
     db.commit()
