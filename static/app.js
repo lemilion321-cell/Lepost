@@ -2050,3 +2050,25 @@ async function banIP() {
     toast('Gagal ban: ' + e.message, true);
   }
 }
+
+/* ── Sidebar ── */
+(function(){
+  function openSidebar(){
+    document.getElementById('sidebar')?.classList.add('open');
+    document.getElementById('sidebar-backdrop')?.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeSidebar(){
+    document.getElementById('sidebar')?.classList.remove('open');
+    document.getElementById('sidebar-backdrop')?.classList.remove('open');
+    document.body.style.overflow='';
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    document.getElementById('sidebar-toggle-btn')?.addEventListener('click',openSidebar);
+    document.getElementById('sidebar-close-btn')?.addEventListener('click',closeSidebar);
+    document.getElementById('sidebar-backdrop')?.addEventListener('click',closeSidebar);
+    document.querySelectorAll('.sidebar-item').forEach(function(el){
+      el.addEventListener('click',closeSidebar);
+    });
+  });
+})();
