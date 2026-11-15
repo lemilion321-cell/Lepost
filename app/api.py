@@ -1048,12 +1048,14 @@ def admin_del_broadcast(user: User = Depends(current_user), db: Session = Depend
 
 # === ADMIN IP BLACKLIST ===
 @router.get("/admin/blacklist")
-def get_blacklist(db: Session = Depends(get_db), _=Depends(admin_only)):
+def get_blacklist(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user.is_admin: raise HTTPException(403, 'Admin only')
     rows = db.query(IPBlacklist).order_by(IPBlacklist.created_at.desc()).all()
     return [{"id": r.id, "ip": r.ip, "reason": r.reason, "created_at": _iso(r.created_at)} for r in rows]
 
 @router.post("/admin/blacklist")
-def ban_ip(data: dict, db: Session = Depends(get_db), _=Depends(admin_only)):
+def ban_ip(data: dict, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user.is_admin: raise HTTPException(403, 'Admin only')
     global _blacklist_cache
     ip = data.get("ip", "").strip()
     reason = data.get("reason", "").strip()
@@ -1069,7 +1071,8 @@ def ban_ip(data: dict, db: Session = Depends(get_db), _=Depends(admin_only)):
     return {"ok": True, "ip": ip}
 
 @router.delete("/admin/blacklist/{ip_id}")
-def unban_ip(ip_id: int, db: Session = Depends(get_db), _=Depends(admin_only)):
+def unban_ip(ip_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    if not user.is_admin: raise HTTPException(403, 'Admin only')
     global _blacklist_cache
     row = db.query(IPBlacklist).filter_by(id=ip_id).first()
     if not row:
