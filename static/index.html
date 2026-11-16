@@ -290,10 +290,13 @@
     </section>
   
     <section data-view="accounts" aria-labelledby="accounts-title" hidden>
-      <div class="page-head"><h1 id="accounts-title" class="page-title">Kelola Akun</h1></div>
+      <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h1 id="accounts-title" class="page-title" style="margin:0">Kelola Akun</h1>
+        <button type="button" class="btn btn-primary btn-sm" id="btn-show-add-acc" onclick="document.getElementById('form-acc').hidden=!document.getElementById('form-acc').hidden;this.textContent=document.getElementById('form-acc').hidden?'+ Tambah Akun':'✕ Batal'">+ Tambah Akun</button>
+      </div>
       <div id="acc-list" class="acc-list"></div>
-      <form id="form-acc" class="acc-form">
-        <h3>Tambah akun baru</h3>
+      <form id="form-acc" class="acc-form" hidden>
+        <h3 style="margin-top:0">Tambah akun baru</h3>
         <div class="field"><label class="label" for="acc-label">Nama akun</label><input id="acc-label" class="input" autocomplete="off" placeholder="Contoh: akun utama"></div>
         <div class="field"><label class="label" for="acc-token">Discord token</label><input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun"></div>
         <div class="field"><label class="label" for="acc-proxy">Proxy (opsional)</label><input id="acc-proxy" class="input" autocomplete="off" placeholder="socks5://user:pass@host:port"></div>

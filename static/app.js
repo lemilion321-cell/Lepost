@@ -2148,7 +2148,8 @@ $('btn-save-status') && $('btn-save-status').addEventListener('click', async () 
         keep_online: $('status-keep-online').checked ? 1 : 0,
       })
     });
-    await loadAccounts();
+      const accIdx = state.accounts.findIndex(a => String(a.id) === String(aid));
+      if (accIdx !== -1) Object.assign(state.accounts[accIdx], {discord_status: status, discord_custom_text: $('status-text').value.trim(), discord_custom_emoji: $('status-emoji').value.trim(), keep_online: $('status-keep-online').checked ? 1 : 0});
     renderAccountList();
     toast('Status disimpan.');
     closeDialog('dlg-status');
