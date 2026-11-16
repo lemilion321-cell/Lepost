@@ -1119,11 +1119,11 @@ function renderAccountList() {
           </div>
         </div>
       </div>
-      <div class="acc-card-actions">
-        <button type="button" class="btn btn-sm acc-btn-action" data-act="open-status" data-id="${a.id}">${icon('zap')} Atur Status</button>
-        <button type="button" class="btn btn-sm acc-btn-action" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}">${icon('bell')} Webhook</button>
-        <button type="button" class="btn btn-sm acc-btn-action" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M12 11l8-8m-3 0l2 2m-4 1l2 2"/></svg> Perbarui Token</button>
-        <button type="button" class="btn btn-icon btn-danger btn-sm acc-btn-del" data-act="del-acc" data-id="${a.id}" aria-label="Hapus akun ${esc(a.label)}">${icon('trash')}</button>
+      <div class="acc-card-actions" style="display:flex;gap:6px;align-items:center">
+        <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}" style="flex:1">${icon('zap')} Atur status</button>
+        <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}" style="flex:1">${icon('bell')} Webhook</button>
+        <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" style="flex:1"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M12 11l8-8m-3 0l2 2m-4 1l2 2"/></svg> Perbarui token</button>
+        <button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}" aria-label="Hapus akun ${esc(a.label)}">${icon('trash')}</button>
       </div>
     </div>`;
   }).join('');
@@ -1173,11 +1173,6 @@ async function submitEditToken(e) {
   const id = Number(dlg?.dataset.accId);
   const token = $('edit-token-input')?.value.trim();
   if (!token) return toast('Token baru wajib diisi.', true);
-  if (!isValidDiscordToken(token)) {
-    const tokenInput = $('edit-token-input');
-    if (tokenInput) { tokenInput.style.borderColor = 'var(--danger, #f23f43)'; setTimeout(() => { tokenInput.style.borderColor = ''; }, 3000); }
-    return toast('⚠️ Token Discord tidak valid! Pastikan token benar dan lengkap.', true);
-  }
   const btn = e.submitter || e.target.querySelector('[type=submit]');
   setBusy(btn, true);
   try {
@@ -1194,23 +1189,12 @@ function openAccounts(opener) {
   location.hash = '#accounts';
 }
 
-function isValidDiscordToken(token) {
-  // Discord token: 3 bagian dipisah titik, panjang minimal 50 karakter
-  return token.length >= 50 && token.split('.').length === 3;
-}
-
 async function submitAccount(e) {
   e.preventDefault();
   const label = $('acc-label').value.trim();
   const token = $('acc-token').value.trim();
   const proxy = $('acc-proxy').value.trim();
   if (!label || !token) return toast('Nama akun dan token wajib diisi.', true);
-  if (!isValidDiscordToken(token)) {
-    const tokenInput = $('acc-token');
-    tokenInput.style.borderColor = 'var(--danger, #f23f43)';
-    setTimeout(() => { tokenInput.style.borderColor = ''; }, 3000);
-    return toast('⚠️ Token Discord tidak valid! Pastikan token benar dan lengkap.', true);
-  }
   const btn = e.submitter || e.target.querySelector('[type=submit]');
   setBusy(btn, true);
   try {
@@ -1221,17 +1205,7 @@ async function submitAccount(e) {
     renderAccountList();
     loadStats();
     toast('Akun ditambahkan.');
-  } catch (err) {
-    const msg = err.message || '';
-    if (msg.toLowerCase().includes('token') || msg.includes('401') || msg.includes('Unauthorized')) {
-      const tokenInput = $('acc-token');
-      tokenInput.style.borderColor = 'var(--danger, #f23f43)';
-      setTimeout(() => { tokenInput.style.borderColor = ''; }, 3000);
-      toast('⚠️ Token Discord tidak valid! Cek kembali token kamu.', true);
-    } else {
-      toast(msg, true);
-    }
-  }
+  } catch (err) { toast(err.message, true); }
   finally { setBusy(btn, false); }
 }
 
