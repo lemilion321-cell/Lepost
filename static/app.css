@@ -972,13 +972,15 @@ button.pill { cursor: pointer; font: inherit; }
 }
 
 .acc-card-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 6px;
   align-items: center;
+  margin-top: 4px;
 }
-.acc-card-actions .btn { font-size: 0.82rem; padding: 5px 12px; }
-.acc-card-actions .btn-icon { padding: 5px 9px; }
+.acc-card-actions .btn { font-size: 0.82rem; padding: 6px 10px; white-space: nowrap; justify-content: center; }
+.acc-btn-action { width: 100%; text-align: center; }
+.acc-btn-del { padding: 6px 10px; }
 
 /* ── Dialog / Modal ── */
 .dialog-overlay {
