@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import router, _ensure_extra_tables, UserBroadcast
 from app.auth import hash_pw
 from app.models import init_db, SessionLocal, User, Query, Log, UserLicense, utcnow
-from app.worker import run_query_loop, start_all_gatewaysfrom app.worker import run_query_loop
+from app.worker import run_query_loop, start_all_gateways
 from config import BASE_DIR, ADMIN_PASSWORD
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
