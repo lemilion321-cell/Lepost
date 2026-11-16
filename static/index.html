@@ -452,19 +452,21 @@
 <div id="dlg-webhook" class="overlay" hidden>
   <div class="dlg dlg-sm" role="dialog" aria-modal="true" aria-labelledby="dlg-webhook-title">
     <div class="dlg-head">
-      <h2 id="dlg-webhook-title" class="dlg-title">Bulk Update Webhook</h2>
+      <h2 id="dlg-webhook-title" class="dlg-title">🔔 Bulk Update Webhook</h2>
       <button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-webhook" aria-label="Tutup">
         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <p id="dlg-webhook-sub" class="hint" style="margin-bottom:12px"></p>
+    <p id="dlg-webhook-sub" class="hint" style="margin-bottom:16px"></p>
     <input type="hidden" id="webhook-acc-id">
-    <div class="field">
+    <div class="field" style="margin-bottom:8px">
       <label class="field-label" for="webhook-url-input">WEBHOOK URL</label>
-      <input type="url" id="webhook-url-input" class="inp" placeholder="https://discord.com/api/webhooks/...">
-      <p class="hint" style="margin-top:4px">Kosongkan untuk menghapus webhook di semua channel akun ini.</p>
+      <input type="url" id="webhook-url-input" class="input" placeholder="https://discord.com/api/webhooks/..." autocomplete="off" style="background:var(--surface);color:var(--text);-webkit-text-fill-color:var(--text);">
     </div>
-    <div class="dlg-actions" style="margin-top:16px">
+    <p class="hint" style="margin-bottom:16px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:6px;border-left:3px solid var(--flame-hi)">
+      ⚠️ Semua channel milik akun ini akan diupdate ke webhook baru. Kosongkan untuk menghapus webhook.
+    </p>
+    <div class="dlg-actions" style="margin-top:4px">
       <button type="button" class="btn" data-act="close" data-dialog="dlg-webhook">Batal</button>
       <button type="button" id="btn-save-webhook" class="btn btn-primary">Simpan webhook</button>
     </div>
