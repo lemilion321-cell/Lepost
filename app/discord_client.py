@@ -152,7 +152,7 @@ class GatewayClient:
             except asyncio.CancelledError:
                 pass
 
-    def update_presence(self, status: str, custom_text: str, custom_emoji: str, activities: list):
+    def update_presence(self, status, custom_text, custom_emoji, activities):
         self.status = status
         self.custom_text = custom_text
         self.custom_emoji = custom_emoji
@@ -165,15 +165,7 @@ class GatewayClient:
             if self.custom_emoji:
                 custom["emoji"] = {"name": self.custom_emoji}
             acts.insert(0, custom)
-        return {
-            "op": 3,
-            "d": {
-                "since": None,
-                "activities": acts,
-                "status": self.status,
-                "afk": False,
-            }
-        }
+        return {"op": 3, "d": {"since": None, "activities": acts, "status": self.status, "afk": False}}
 
     async def _run(self):
         while self._running:
@@ -190,5 +182,57 @@ class GatewayClient:
         if self.proxy:
             from aiohttp_socks import ProxyConnector
             connector = ProxyConnector.from_url(self.proxy)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            async with session.ws_connect(GATEWAY_URL) as ws:
+                self.ws = ws
+                async for msg in ws:
+                    if not self._running:
+                        break
+                    if msg.type == aiohttp.WSMsgType.TEXT:
+                        data = json.loads(msg.data)
+                        await self._handle(ws, data)
+                    elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                        break
 
-        async with aiohttp.ClientSession(
+    async def _handle(self, ws, data):
+        op = data.get("op")
+        d = data.get("d")
+        s = data.get("s")
+        if s:
+            self.sequence = s
+        if op == 10:
+            self._heartbeat_interval = d["heartbeat_interval"] / 1000
+            asyncio.create_task(self._heartbeat_loop(ws))
+            await self._identify(ws)
+        elif op == 0:
+            t = data.get("t")
+            if t == "READY":
+                self.session_id = d.get("session_id")
+                log.info("Gateway READY: %s", d.get("user", {}).get("username"))
+                await ws.send_str(json.dumps(self._build_presence()))
+        elif op == 1:
+            await ws.send_str(json.dumps({"op": 1, "d": self.sequence}))
+
+    async def _heartbeat_loop(self, ws):
+        await asyncio.sleep(self._heartbeat_interval * 0.9)
+        while self._running and not ws.closed:
+            try:
+                await ws.send_str(json.dumps({"op": 1, "d": self.sequence}))
+                await asyncio.sleep(self._heartbeat_interval)
+            except Exception:
+                break
+
+    async def _identify(self, ws):
+        payload = {
+            "op": 2,
+            "d": {
+                "token": self.token,
+                "properties": {"os": "Windows", "browser": "Discord Client", "device": "Desktop"},
+                "presence": self._build_presence()["d"],
+            }
+        }
+        await ws.send_str(json.dumps(payload))
+
+    async def send_presence(self):
+        if self.ws and not self.ws.closed:
+            await self.ws.send_str(json.dumps(self._build_presence()))
