@@ -228,6 +228,7 @@ class GatewayClient:
                 await ws.send_str(json.dumps(self._build_presence()))
                 if hasattr(self, '_ready'):
                     self._ready.set()
+                await self.send_presence()
         elif op == 1:
             await ws.send_str(json.dumps({"op": 1, "d": self.sequence}))
 
