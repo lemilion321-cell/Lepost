@@ -133,10 +133,10 @@ async def lifespan(app: FastAPI):
                 _conn.rollback()
     # Backfill dc_id + dc_avatar untuk akun lama
     try:
-        from app.models import SessionLocal, Account
+        from app.models import SessionLocal as _SL, Account
         from app.discord_client import Discord
         from app.auth import decrypt_token as _dec
-        _db = SessionLocal()
+        _db = _SL()
         _accs = _db.query(Account).filter((Account.dc_id == None) | (Account.dc_id == "")).all()
         for _a in _accs:
             try:
