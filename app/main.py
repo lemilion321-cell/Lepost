@@ -131,6 +131,29 @@ async def lifespan(app: FastAPI):
                 _conn.commit()
             except Exception:
                 _conn.rollback()
+    # Backfill dc_id + dc_avatar untuk akun lama
+    try:
+        from app.models import SessionLocal, Account
+        from app.discord_client import Discord
+        from app.auth import decrypt_token as _dec
+        _db = SessionLocal()
+        _accs = _db.query(Account).filter((Account.dc_id == None) | (Account.dc_id == "")).all()
+        for _a in _accs:
+            try:
+                _tok = _dec(_a.token_enc)
+                async with Discord(_tok, _a.proxy or "") as _dc:
+                    _r = await _dc.me()
+                if "id" in _r:
+                    _a.dc_id = str(_r["id"])
+                    _a.dc_avatar = _r.get("avatar", "") or ""
+                    _a.discord_username = _r.get("username", _a.discord_username)
+            except Exception as _e:
+                log.warning("Backfill avatar acc %s: %s", _a.id, _e)
+        _db.commit()
+        _db.close()
+        log.info("Backfill avatar selesai untuk %d akun", len(_accs))
+    except Exception as _e:
+        log.warning("Backfill avatar error: %s", _e)
     await start_all_gateways()
     try:
         yield

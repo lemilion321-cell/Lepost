@@ -1199,6 +1199,7 @@ async function submitAccount(e) {
   try {
     await api('/accounts', { method: 'POST', body: JSON.stringify({ label, token, proxy }) });
     e.target.reset();
+    closeDialog('dlg-add-acc');
     await loadAccounts();
     renderAccountList();
     loadStats();

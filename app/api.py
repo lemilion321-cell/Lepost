@@ -691,6 +691,8 @@ async def patch_account(aid: int, data: AccountPatch, user: User = Depends(curre
             _discord_fail(result, "Gagal cek token baru")
         acc.token_enc = _enc_token(token)
         acc.discord_username = result.get("username", acc.discord_username)
+        acc.dc_id = str(result.get("id", getattr(acc, "dc_id", "") or ""))
+        acc.dc_avatar = result.get("avatar", "") or getattr(acc, "dc_avatar", "") or ""
         if data.proxy is not None:
             acc.proxy = proxy
     if data.label is not None:
