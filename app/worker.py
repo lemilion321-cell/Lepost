@@ -341,3 +341,94 @@ async def run_query_loop(q_id: int):
             log.exception("Worker error (query %s)", q_id)
             _log(q_id, "ERROR", f"Worker error: {e}")
             await asyncio.sleep(10)
+# ─────────────────────────── Gateway Manager ───────────────────────────
+from app.discord_client import GatewayClient
+
+_gateways: dict = {}  # {acc_id: GatewayClient}
+
+def _load_acc_presence(acc_id: int):
+    db = SessionLocal()
+    try:
+        a = db.get(Account, acc_id)
+        if not a:
+            return None
+        return {
+            "token": _dec_token(a.token_enc),
+            "proxy": a.proxy or "",
+            "status": a.discord_status or "online",
+            "custom_text": a.discord_custom_text or "",
+            "custom_emoji": a.discord_custom_emoji or "",
+            "rpc_json": a.rpc_json or "{}",
+            "keep_online": a.keep_online or 0,
+        }
+    finally:
+        db.close()
+
+def _build_activities(rpc_json: str) -> list:
+    try:
+        rpc = json.loads(rpc_json)
+        if not rpc or not rpc.get("enabled"):
+            return []
+        act = {
+            "type": rpc.get("type", 0),
+            "name": rpc.get("name", ""),
+        }
+        if rpc.get("app_id"):
+            act["application_id"] = rpc["app_id"]
+        if rpc.get("details"):
+            act["details"] = rpc["details"]
+        if rpc.get("state"):
+            act["state"] = rpc["state"]
+        assets = {}
+        if rpc.get("large_image"):
+            assets["large_image"] = rpc["large_image"]
+        if rpc.get("large_text"):
+            assets["large_text"] = rpc["large_text"]
+        if rpc.get("small_image"):
+            assets["small_image"] = rpc["small_image"]
+        if rpc.get("small_text"):
+            assets["small_text"] = rpc["small_text"]
+        if assets:
+            act["assets"] = assets
+        buttons = []
+        if rpc.get("btn1_label") and rpc.get("btn1_url"):
+            buttons.append({"label": rpc["btn1_label"], "url": rpc["btn1_url"]})
+        if rpc.get("btn2_label") and rpc.get("btn2_url"):
+            buttons.append({"label": rpc["btn2_label"], "url": rpc["btn2_url"]})
+        if buttons:
+            act["buttons"] = buttons
+        if rpc.get("elapsed"):
+            act["timestamps"] = {"start": int(time.time()) - rpc.get("elapsed_sec", 0)}
+        return [act]
+    except Exception:
+        return []
+
+async def start_gateway(acc_id: int):
+    await stop_gateway(acc_id)
+    data = _load_acc_presence(acc_id)
+    if not data or not data["keep_online"]:
+        return
+    gw = GatewayClient(data["token"], data["proxy"])
+    activities = _build_activities(data["rpc_json"])
+    gw.update_presence(data["status"], data["custom_text"], data["custom_emoji"], activities)
+    _gateways[acc_id] = gw
+    await gw.start()
+    log.info("Gateway started for acc_id=%s", acc_id)
+
+async def stop_gateway(acc_id: int):
+    gw = _gateways.pop(acc_id, None)
+    if gw:
+        await gw.stop()
+        log.info("Gateway stopped for acc_id=%s", acc_id)
+
+async def restart_gateway(acc_id: int):
+    await start_gateway(acc_id)
+
+async def start_all_gateways():
+    db = SessionLocal()
+    try:
+        accs = db.query(Account).filter(Account.keep_online == 1).all()
+        for a in accs:
+            await start_gateway(a.id)
+    finally:
+        db.close()

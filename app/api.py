@@ -1168,3 +1168,60 @@ def admin_trigger_expiry_notify(user: User = Depends(current_user), db: Session 
         count += 1
     db.commit()
     return {"ok": True, "notified": count}
+# ─────────────────────────── Presence & RPC ───────────────────────────
+import time as _time
+
+class PresenceIn(BaseModel):
+    discord_status: str = "online"
+    discord_custom_text: str = ""
+    discord_custom_emoji: str = ""
+    keep_online: int = 0
+
+class RpcIn(BaseModel):
+    rpc_json: str = "{}"
+
+@router.patch("/accounts/{aid}/presence")
+async def update_presence(aid: int, inp: PresenceIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    acc = _get_account(db, aid, user)
+    acc.discord_status = inp.discord_status
+    acc.discord_custom_text = inp.discord_custom_text
+    acc.discord_custom_emoji = inp.discord_custom_emoji
+    acc.keep_online = inp.keep_online
+    db.commit()
+    from app.worker import restart_gateway, stop_gateway
+    if inp.keep_online:
+        await restart_gateway(aid)
+    else:
+        await stop_gateway(aid)
+    return {"ok": True}
+
+@router.patch("/accounts/{aid}/rpc")
+async def update_rpc(aid: int, inp: RpcIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    acc = _get_account(db, aid, user)
+    try:
+        json.loads(inp.rpc_json)
+    except Exception:
+        raise HTTPException(400, "rpc_json tidak valid")
+    acc.rpc_json = inp.rpc_json
+    db.commit()
+    from app.worker import restart_gateway
+    await restart_gateway(aid)
+    return {"ok": True}
+
+@router.get("/accounts")
+def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    accs = db.query(Account).filter(Account.owner_id == user.id).all()
+    return [
+        {
+            "id": a.id,
+            "label": a.label,
+            "proxy": a.proxy or "",
+            "discord_username": a.discord_username or "",
+            "discord_status": getattr(a, "discord_status", "online") or "online",
+            "discord_custom_text": getattr(a, "discord_custom_text", "") or "",
+            "discord_custom_emoji": getattr(a, "discord_custom_emoji", "") or "",
+            "keep_online": getattr(a, "keep_online", 0) or 0,
+            "rpc_json": getattr(a, "rpc_json", "{}") or "{}",
+        }
+        for a in accs
+    ]

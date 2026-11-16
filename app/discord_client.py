@@ -118,3 +118,77 @@ class Discord:
         if "error" not in res and react and res.get("id"):
             await self._req("PUT", f"/channels/{ch}/messages/{res['id']}/reactions/{quote(react)}/@me")
         return res
+import time
+
+GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json"
+
+class GatewayClient:
+    def __init__(self, token: str, proxy: str = ""):
+        self.token = token.strip()
+        self.proxy = proxy.strip()
+        self.ws = None
+        self.session_id = None
+        self.sequence = None
+        self._heartbeat_interval = None
+        self._running = False
+        self._task = None
+        self.status = "online"
+        self.custom_text = ""
+        self.custom_emoji = ""
+        self.activities = []
+
+    async def start(self):
+        self._running = True
+        self._task = asyncio.create_task(self._run())
+
+    async def stop(self):
+        self._running = False
+        if self.ws:
+            await self.ws.close()
+        if self._task:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+
+    def update_presence(self, status: str, custom_text: str, custom_emoji: str, activities: list):
+        self.status = status
+        self.custom_text = custom_text
+        self.custom_emoji = custom_emoji
+        self.activities = activities
+
+    def _build_presence(self):
+        acts = list(self.activities)
+        if self.custom_text or self.custom_emoji:
+            custom = {"type": 4, "name": "Custom Status", "state": self.custom_text or ""}
+            if self.custom_emoji:
+                custom["emoji"] = {"name": self.custom_emoji}
+            acts.insert(0, custom)
+        return {
+            "op": 3,
+            "d": {
+                "since": None,
+                "activities": acts,
+                "status": self.status,
+                "afk": False,
+            }
+        }
+
+    async def _run(self):
+        while self._running:
+            try:
+                await self._connect()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                log.warning("Gateway error, reconnect in 10s: %s", e)
+                await asyncio.sleep(10)
+
+    async def _connect(self):
+        connector = None
+        if self.proxy:
+            from aiohttp_socks import ProxyConnector
+            connector = ProxyConnector.from_url(self.proxy)
+
+        async with aiohttp.ClientSession(

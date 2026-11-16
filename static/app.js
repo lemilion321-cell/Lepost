@@ -1091,6 +1091,7 @@ function renderAccountList() {
         </div>
       </div>
       <div class="acc-actions">
+        <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">Atur Status</button>
         <button type="button" class="btn btn-icon btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" aria-label="Edit token ${esc(a.label)}" title="Ganti token">${icon('key')}</button>
         <button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}" aria-label="Hapus akun ${esc(a.label)}">${icon('trash')}</button>
       </div>
@@ -1866,6 +1867,11 @@ document.addEventListener('click', e => {
     case 'new-bypass':       return openBypass(el);
     case 'open-acc':         return openAccounts(el);
     case 'del-acc':          return hapusAkun(id);
+    case 'open-status': {
+      const acc = state.accounts.find(a => a.id === parseInt(el.dataset.id));
+      if (acc) openStatusDialog(acc);
+      break;
+    }
     case 'edit-token':       return openEditToken(id, el.dataset.label, el);
     case 'close-edit-token': return closeDialog('dlg-edit-token');
     case 'select-all':       return selectAllBypass();
@@ -2076,3 +2082,165 @@ async function banIP() {
     });
   });
 })();
+/* ───────── Status Discord ───────── */
+function openStatusDialog(acc) {
+  $('status-acc-id').value = acc.id;
+  $('dlg-status-sub').textContent = 'Status untuk ' + acc.label + '. Perubahan diterapkan ke akun Discord ini.';
+  document.querySelectorAll('#status-seg [data-s]').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.s === (acc.discord_status || 'online')));
+  });
+  $('status-emoji').value = acc.discord_custom_emoji || '';
+  $('status-text').value = acc.discord_custom_text || '';
+  $('status-keep-online').checked = !!(acc.keep_online);
+  openDialog('dlg-status');
+}
+
+document.addEventListener('click', e => {
+  const sb = e.target.closest('#status-seg [data-s]');
+  if (sb) {
+    document.querySelectorAll('#status-seg [data-s]').forEach(b => b.setAttribute('aria-pressed', 'false'));
+    sb.setAttribute('aria-pressed', 'true');
+  }
+});
+
+$('btn-save-status') && $('btn-save-status').addEventListener('click', async () => {
+  const aid = $('status-acc-id').value;
+  const status = document.querySelector('#status-seg [aria-pressed="true"]')?.dataset.s || 'online';
+  const btn = $('btn-save-status');
+  setBusy(btn, true);
+  try {
+    await api(`/accounts/${aid}/presence`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        discord_status: status,
+        discord_custom_text: $('status-text').value.trim(),
+        discord_custom_emoji: $('status-emoji').value.trim(),
+        keep_online: $('status-keep-online').checked ? 1 : 0,
+      })
+    });
+    toast('Status disimpan.');
+    closeDialog('dlg-status');
+    await loadAccounts();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+/* ───────── Custom RPC ───────── */
+let _rpcAccId = null;
+
+async function loadRpcPage() {
+  const tabs = $('rpc-tabs');
+  const content = $('rpc-content');
+  if (!tabs || !content) return;
+  const accs = state.accounts;
+  if (!accs.length) {
+    content.innerHTML = '<p class="hint">Belum ada akun. Tambah akun dulu di menu Akun.</p>';
+    return;
+  }
+  if (!_rpcAccId) _rpcAccId = accs[0].id;
+  tabs.innerHTML = accs.map(a =>
+    `<button type="button" data-rpc-tab="${a.id}" aria-pressed="${a.id === _rpcAccId}">${esc(a.label)}</button>`
+  ).join('');
+  tabs.querySelectorAll('[data-rpc-tab]').forEach(b => {
+    b.addEventListener('click', () => {
+      _rpcAccId = parseInt(b.dataset.rpcTab);
+      loadRpcPage();
+    });
+  });
+  const acc = accs.find(a => a.id === _rpcAccId);
+  if (!acc) return;
+  let rpc = {};
+  try { rpc = JSON.parse(acc.rpc_json || '{}'); } catch {}
+  content.innerHTML = `
+    <div class="acc-form">
+      <h3>Pengaturan RPC untuk ${esc(acc.label)}</h3>
+      <div class="field"><label class="label">Activity type</label>
+        <select id="rpc-type" class="select">
+          <option value="0" ${rpc.type==0?'selected':''}>Playing (Bermain)</option>
+          <option value="1" ${rpc.type==1?'selected':''}>Streaming</option>
+          <option value="2" ${rpc.type==2?'selected':''}>Listening</option>
+          <option value="3" ${rpc.type==3?'selected':''}>Watching</option>
+          <option value="5" ${rpc.type==5?'selected':''}>Competing</option>
+        </select>
+      </div>
+      <div class="field"><label class="label">Activity name</label><input id="rpc-name" class="input" placeholder="Contoh: Helga Market" value="${esc(rpc.name||'')}"></div>
+      <div class="field"><label class="label">Application ID</label><input id="rpc-appid" class="input" placeholder="Angka dari Developer Portal" value="${esc(rpc.app_id||'')}"></div>
+      <div class="field"><label class="label">Details</label><input id="rpc-details" class="input" placeholder="Baris pertama" value="${esc(rpc.details||'')}"></div>
+      <div class="field"><label class="label">State</label><input id="rpc-state" class="input" placeholder="Baris kedua" value="${esc(rpc.state||'')}"></div>
+      <div class="field"><label class="label">Gambar besar (URL atau nama asset)</label><input id="rpc-large-img" class="input" placeholder="https://..." value="${esc(rpc.large_image||'')}"></div>
+      <div class="field"><label class="label">Large tooltip</label><input id="rpc-large-text" class="input" placeholder="Teks saat gambar besar disorot" value="${esc(rpc.large_text||'')}"></div>
+      <div class="field"><label class="label">Small image URL</label><input id="rpc-small-img" class="input" placeholder="https://..." value="${esc(rpc.small_image||'')}"></div>
+      <div class="field"><label class="label">Small tooltip</label><input id="rpc-small-text" class="input" placeholder="Teks saat gambar kecil disorot" value="${esc(rpc.small_text||'')}"></div>
+      <div class="field"><label class="label">Tombol 1 label</label><input id="rpc-btn1-label" class="input" placeholder="Contoh: Order sekarang" value="${esc(rpc.btn1_label||'')}"></div>
+      <div class="field"><label class="label">Tombol 1 URL</label><input id="rpc-btn1-url" class="input" placeholder="https://..." value="${esc(rpc.btn1_url||'')}"></div>
+      <div class="field"><label class="label">Tombol 2 label</label><input id="rpc-btn2-label" class="input" placeholder="Contoh: Gabung Discord" value="${esc(rpc.btn2_label||'')}"></div>
+      <div class="field"><label class="label">Tombol 2 URL</label><input id="rpc-btn2-url" class="input" placeholder="https://..." value="${esc(rpc.btn2_url||'')}"></div>
+      <div class="field"><label class="label"><input type="checkbox" id="rpc-elapsed" ${rpc.elapsed?'checked':''}> Tampilkan elapsed time (waktu berjalan)</label>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="rpc-elapsed-h" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_h||0}" style="width:80px"> <span style="line-height:40px">jam</span>
+          <input id="rpc-elapsed-m" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_m||0}" style="width:80px"> <span style="line-height:40px">menit</span>
+          <input id="rpc-elapsed-s" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_s||0}" style="width:80px"> <span style="line-height:40px">detik</span>
+        </div>
+      </div>
+      <div class="acc-form" style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.08);padding-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <b>Pratinjau</b>
+          <span class="badge ${rpc.enabled?'badge-ok':'badge-bad'}">${rpc.enabled?'Aktif':'Nonaktif'}</span>
+        </div>
+        <div style="background:#1e2029;border-radius:8px;padding:12px;display:flex;gap:12px;align-items:center">
+          ${rpc.large_image?`<img src="${esc(rpc.large_image)}" style="width:60px;height:60px;border-radius:8px;object-fit:cover">` : '<div style="width:60px;height:60px;border-radius:8px;background:#2e3038"></div>'}
+          <div>
+            <p style="font-size:0.8em;color:#b0b4c1;margin:0">${rpc.type==1?'Streaming':rpc.type==2?'Listening to':rpc.type==3?'Watching':rpc.type==5?'Competing in':'Sedang bermain'}</p>
+            <p style="margin:2px 0;font-weight:600">${esc(rpc.name||'Nama aktivitas')}</p>
+            ${rpc.details?`<p style="font-size:0.85em;margin:0;color:#b0b4c1">${esc(rpc.details)}</p>`:''}
+            ${rpc.state?`<p style="font-size:0.85em;margin:0;color:#b0b4c1">${esc(rpc.state)}</p>`:''}
+          </div>
+        </div>
+      </div>
+      <button type="button" id="btn-save-rpc" class="btn btn-primary" style="margin-top:16px">Simpan dan aktifkan RPC</button>
+      <p class="hint" style="margin-top:8px">Tombol RPC tidak terlihat di profil sendiri, hanya oleh orang lain.</p>
+    </div>
+  `;
+  $('btn-save-rpc').addEventListener('click', async () => {
+    const btn = $('btn-save-rpc');
+    const eh = parseInt($('rpc-elapsed-h').value)||0;
+    const em = parseInt($('rpc-elapsed-m').value)||0;
+    const es = parseInt($('rpc-elapsed-s').value)||0;
+    const rpcData = {
+      enabled: true,
+      type: parseInt($('rpc-type').value)||0,
+      name: $('rpc-name').value.trim(),
+      app_id: $('rpc-appid').value.trim(),
+      details: $('rpc-details').value.trim(),
+      state: $('rpc-state').value.trim(),
+      large_image: $('rpc-large-img').value.trim(),
+      large_text: $('rpc-large-text').value.trim(),
+      small_image: $('rpc-small-img').value.trim(),
+      small_text: $('rpc-small-text').value.trim(),
+      btn1_label: $('rpc-btn1-label').value.trim(),
+      btn1_url: $('rpc-btn1-url').value.trim(),
+      btn2_label: $('rpc-btn2-label').value.trim(),
+      btn2_url: $('rpc-btn2-url').value.trim(),
+      elapsed: $('rpc-elapsed').checked,
+      elapsed_h: eh, elapsed_m: em, elapsed_s: es,
+      elapsed_sec: eh*3600 + em*60 + es,
+    };
+    setBusy(btn, true);
+    try {
+      await api(`/accounts/${_rpcAccId}/rpc`, {
+        method: 'PATCH',
+        body: JSON.stringify({ rpc_json: JSON.stringify(rpcData) })
+      });
+      toast('RPC disimpan dan diaktifkan.');
+      await loadAccounts();
+      loadRpcPage();
+    } catch (err) {
+      toast(err.message, true);
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+}

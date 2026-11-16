@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import router, _ensure_extra_tables, UserBroadcast
 from app.auth import hash_pw
 from app.models import init_db, SessionLocal, User, Query, Log, UserLicense, utcnow
-from app.worker import run_query_loop
+from app.worker import run_query_loop, start_all_gatewaysfrom app.worker import run_query_loop
 from config import BASE_DIR, ADMIN_PASSWORD
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -87,7 +87,7 @@ async def manager_loop(app: FastAPI):
             for qid in active_ids:
                 t = tasks.get(qid)
                 if t is None or t.done():
-                    tasks[qid] = asyncio.create_task(run_query_loop(qid))
+          x          tasks[qid] = asyncio.create_task(run_query_loop(qid))
             for qid in list(tasks.keys()):
                 if qid not in active_ids:
                     tasks[qid].cancel()
@@ -121,6 +121,7 @@ async def lifespan(app: FastAPI):
     app.state.tasks = {}
     m_task = asyncio.create_task(manager_loop(app))
     n_task = asyncio.create_task(expiry_notify_loop())
+    await start_all_gateways()
     try:
         yield
     finally:
