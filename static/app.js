@@ -2128,10 +2128,10 @@ $('btn-save-status') && $('btn-save-status').addEventListener('click', async () 
         keep_online: $('status-keep-online').checked ? 1 : 0,
       })
     });
-    toast('Status disimpan.');
-    closeDialog('dlg-status');
     await loadAccounts();
     renderAccountList();
+    toast('Status disimpan.');
+    closeDialog('dlg-status');
   } catch (err) {
     toast(err.message, true);
   } finally {
