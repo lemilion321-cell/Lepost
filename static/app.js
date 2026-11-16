@@ -728,6 +728,7 @@ window.addEventListener('hashchange', () => { window.scrollTo(0, 0); showTab(cur
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
   if (tab === 'logs') return loadLogs();
+  if (tab === 'rpc') { loadAccounts().then(() => loadRpcPage()); return; }
   if (tab === 'accounts') return renderAccountList();
   if (tab === 'admin') { setAdminTab('keys'); return; }
   return loadQueries();
