@@ -209,6 +209,9 @@ class GatewayClient:
             if t == "READY":
                 self.session_id = d.get("session_id")
                 log.info("Gateway READY: %s", d.get("user", {}).get("username"))
+                await asyncio.sleep(1)
+                await ws.send_str(json.dumps(self._build_presence()))
+                await asyncio.sleep(2)
                 await ws.send_str(json.dumps(self._build_presence()))
         elif op == 1:
             await ws.send_str(json.dumps({"op": 1, "d": self.sequence}))
