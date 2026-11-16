@@ -2134,7 +2134,7 @@ document.addEventListener('click', e => {
   }
 });
 
-$('btn-save-status') && $('btn-save-status').addEventListener('click', async () => {
+$('btn-save-status') && ($('btn-save-status').onclick = async () => {
   const aid = $('status-acc-id').value;
   const status = document.querySelector('#status-seg [aria-pressed="true"]')?.dataset.s || 'online';
   const btn = $('btn-save-status');
