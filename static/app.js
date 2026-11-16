@@ -2131,6 +2131,7 @@ $('btn-save-status') && $('btn-save-status').addEventListener('click', async () 
     toast('Status disimpan.');
     closeDialog('dlg-status');
     await loadAccounts();
+    renderAccountList();
   } catch (err) {
     toast(err.message, true);
   } finally {

@@ -406,14 +406,20 @@ def _build_activities(rpc_json: str) -> list:
 async def start_gateway(acc_id: int):
     await stop_gateway(acc_id)
     data = _load_acc_presence(acc_id)
-    if not data or not data["keep_online"]:
+    if not data:
         return
     gw = GatewayClient(data["token"], data["proxy"])
     activities = _build_activities(data["rpc_json"])
     gw.update_presence(data["status"], data["custom_text"], data["custom_emoji"], activities)
-    _gateways[acc_id] = gw
-    await gw.start()
-    log.info("Gateway started for acc_id=%s", acc_id)
+    if data["keep_online"]:
+        _gateways[acc_id] = gw
+        await gw.start()
+        log.info("Gateway started (24/7) for acc_id=%s", acc_id)
+    else:
+        await gw.start_and_wait_ready(timeout=15)
+        await asyncio.sleep(2)
+        await gw.stop()
+        log.info("Gateway presence sent (one-shot) for acc_id=%s", acc_id)
 
 async def stop_gateway(acc_id: int):
     gw = _gateways.pop(acc_id, None)

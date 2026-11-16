@@ -141,6 +141,15 @@ class GatewayClient:
         self._running = True
         self._task = asyncio.create_task(self._run())
 
+    async def start_and_wait_ready(self, timeout=15):
+        self._ready = asyncio.Event()
+        self._running = True
+        self._task = asyncio.create_task(self._run())
+        try:
+            await asyncio.wait_for(self._ready.wait(), timeout=timeout)
+        except asyncio.TimeoutError:
+            log.warning("Gateway ready timeout")
+
     async def stop(self):
         self._running = False
         if self.ws:
@@ -217,6 +226,8 @@ class GatewayClient:
                 await ws.send_str(json.dumps(self._build_presence()))
                 await asyncio.sleep(2)
                 await ws.send_str(json.dumps(self._build_presence()))
+                if hasattr(self, '_ready'):
+                    self._ready.set()
         elif op == 1:
             await ws.send_str(json.dumps({"op": 1, "d": self.sequence}))
 
