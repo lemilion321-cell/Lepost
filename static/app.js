@@ -1075,6 +1075,14 @@ async function loadAccounts() {
   }
 }
 
+const statusBadge = (a) => {
+  const s = a.discord_status || 'online';
+  const colors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
+  const labels = {online:'Online',idle:'Idle',dnd:'DND',invisible:'Invisible'};
+  const ko = a.keep_online ? '<span class="badge badge-ok" style="margin-left:4px;font-size:0.75em">24/7</span>' : '';
+  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.78em;background:rgba(255,255,255,0.07);padding:2px 8px;border-radius:20px"><span style="width:8px;height:8px;border-radius:50%;background:' + colors[s] + ';display:inline-block"></span>' + labels[s] + '</span>' + ko;
+};
+
 function renderAccountList() {
   const box = $('acc-list');
   if (!box) return;
