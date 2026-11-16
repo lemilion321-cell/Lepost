@@ -37,7 +37,8 @@ def _dec_token(enc: str) -> str:
     try:
         return _fernet.decrypt(enc.encode()).decode()
     except Exception:
-        # fallback: token lama yang belum dienkripsi (migrasi transparan)
+        import logging as _lg
+        _lg.getLogger("autopost").warning("SECURITY: token plaintext fallback dipakai - re-save token akun ini!")
         return enc
 
 router = APIRouter()
@@ -400,8 +401,9 @@ def register(inp: RegisterIn, user: User = Depends(current_user), db: Session = 
 
 
 @router.post("/signup")
-def signup(inp: SignupIn, db: Session = Depends(get_db)):
+def signup(inp: SignupIn, request: Request, db: Session = Depends(get_db)):
     """Daftar mandiri pakai key dari admin."""
+    client_ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
     # Bug #1 fix: SELECT FOR UPDATE untuk hindari race condition dua request
     # dengan username berbeda tapi key sama lolos cek used_by bersamaan
     lic = db.query(License).filter_by(key=inp.key.upper()).with_for_update().first()

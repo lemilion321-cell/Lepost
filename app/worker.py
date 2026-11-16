@@ -20,6 +20,8 @@ def _dec_token(enc: str) -> str:
     try:
         return _fernet.decrypt(enc.encode()).decode()
     except Exception:
+        import logging as _lg
+        _lg.getLogger("autopost").warning("SECURITY: token plaintext fallback dipakai di worker - re-save token akun!")
         return enc
 
 log = logging.getLogger("autopost.worker")
