@@ -87,7 +87,7 @@ async def manager_loop(app: FastAPI):
             for qid in active_ids:
                 t = tasks.get(qid)
                 if t is None or t.done():
-          x          tasks[qid] = asyncio.create_task(run_query_loop(qid))
+                          tasks[qid] = asyncio.create_task(run_query_loop(qid))
             for qid in list(tasks.keys()):
                 if qid not in active_ids:
                     tasks[qid].cancel()
