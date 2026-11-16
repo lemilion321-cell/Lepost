@@ -121,6 +121,16 @@ async def lifespan(app: FastAPI):
     app.state.tasks = {}
     m_task = asyncio.create_task(manager_loop(app))
     n_task = asyncio.create_task(expiry_notify_loop())
+    # Migrasi otomatis kolom baru
+    from sqlalchemy import text
+    from app.db import engine
+    with engine.connect() as _conn:
+        for _col, _typ in [("dc_id", "VARCHAR(32) DEFAULT ''"), ("dc_avatar", "VARCHAR(128) DEFAULT ''")]:
+            try:
+                _conn.execute(text(f"ALTER TABLE accounts ADD COLUMN IF NOT EXISTS {_col} {_typ}"))
+                _conn.commit()
+            except Exception:
+                _conn.rollback()
     await start_all_gateways()
     try:
         yield
