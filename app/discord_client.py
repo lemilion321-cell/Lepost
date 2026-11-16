@@ -182,8 +182,12 @@ class GatewayClient:
         if self.proxy:
             from aiohttp_socks import ProxyConnector
             connector = ProxyConnector.from_url(self.proxy)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9026 Chrome/108.0.5359.215 Electron/22.0.0 Safari/537.36",
+            "Origin": "https://discord.com",
+        }
         async with aiohttp.ClientSession(connector=connector) as session:
-            async with session.ws_connect(GATEWAY_URL) as ws:
+            async with session.ws_connect(GATEWAY_URL, headers=headers) as ws:
                 self.ws = ws
                 async for msg in ws:
                     if not self._running:
