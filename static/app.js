@@ -1113,7 +1113,7 @@ function renderAccountList() {
           <div class="acc-card-user">@${esc(a.dc_user || a.discord_username || '?')}</div>
           <div class="acc-card-badges">
             <span class="badge badge-ok">Token aktif</span>
-            <span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">${statusLabels[s]}</span>
+            <span class="badge" style="background:${statusColors[s]}22;color:${statusColors[s]};border:1px solid ${statusColors[s]}55">${statusLabels[s]}</span>
             ${a.keep_online ? '<span class="badge badge-ok">Online 24/7</span>' : ''}
             ${a.proxy ? '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">Proxy</span>' : ''}
           </div>
@@ -1122,6 +1122,7 @@ function renderAccountList() {
       <div class="acc-card-actions">
         <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">${icon('zap')} Atur status</button>
         <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" title="Ganti token">${icon('key')} Perbarui token</button>
+        <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}" title="Bulk update webhook">${icon('link')} Webhook</button>
         <button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}" aria-label="Hapus akun ${esc(a.label)}">${icon('trash')}</button>
       </div>
     </div>`;
@@ -1904,6 +1905,7 @@ document.addEventListener('click', e => {
       break;
     }
     case 'edit-token':       return openEditToken(id, el.dataset.label, el);
+    case 'open-webhook':     return openWebhookDialog(id, el.dataset.label);
     case 'close-edit-token': return closeDialog('dlg-edit-token');
     case 'select-all':       return selectAllBypass();
     case 'export-csv':       return exportLogs();
@@ -2134,7 +2136,15 @@ document.addEventListener('click', e => {
   }
 });
 
+let _statusLastSave = 0;
+const STATUS_COOLDOWN_MS = 5000; // 5 detik cooldown
 $('btn-save-status') && ($('btn-save-status').onclick = async () => {
+  const now = Date.now();
+  const sisa = STATUS_COOLDOWN_MS - (now - _statusLastSave);
+  if (sisa > 0) {
+    toast(`Tunggu ${Math.ceil(sisa/1000)} detik sebelum mengubah status lagi (menghindari rate limit Discord).`, true);
+    return;
+  }
   const aid = $('status-acc-id').value;
   const status = document.querySelector('#status-seg [aria-pressed="true"]')?.dataset.s || 'online';
   const btn = $('btn-save-status');
@@ -2151,9 +2161,37 @@ $('btn-save-status') && ($('btn-save-status').onclick = async () => {
     });
       const accIdx = state.accounts.findIndex(a => String(a.id) === String(aid));
       if (accIdx !== -1) Object.assign(state.accounts[accIdx], {discord_status: status, discord_custom_text: $('status-text').value.trim(), discord_custom_emoji: $('status-emoji').value.trim(), keep_online: $('status-keep-online').checked ? 1 : 0});
+    _statusLastSave = Date.now();
     renderAccountList();
     toast('Status disimpan.');
     closeDialog('dlg-status');
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    setBusy(btn, false);
+  }
+});
+
+/* ───────── Bulk Webhook ───────── */
+function openWebhookDialog(aid, label) {
+  $('webhook-acc-id').value = aid;
+  $('dlg-webhook-sub').textContent = 'Ganti webhook semua channel milik akun ' + label + '.';
+  $('webhook-url-input').value = '';
+  openDialog('dlg-webhook');
+}
+
+$('btn-save-webhook') && ($('btn-save-webhook').onclick = async () => {
+  const aid = $('webhook-acc-id').value;
+  const webhook_url = $('webhook-url-input').value.trim();
+  const btn = $('btn-save-webhook');
+  setBusy(btn, true);
+  try {
+    const res = await api(`/accounts/${aid}/webhook`, {
+      method: 'PATCH',
+      body: JSON.stringify({ webhook_url })
+    });
+    toast(`Webhook diperbarui. ${res.updated} channel diupdate.`);
+    closeDialog('dlg-webhook');
   } catch (err) {
     toast(err.message, true);
   } finally {

@@ -1216,6 +1216,25 @@ async def update_presence(aid: int, inp: PresenceIn, user: User = Depends(curren
         await stop_gateway(aid)
     return {"ok": True}
 
+@router.patch("/accounts/{aid}/webhook")
+async def bulk_update_webhook(aid: int, data: dict, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    acc = _get_account(db, aid, user)
+    webhook_url = data.get("webhook_url", "").strip()
+    _check_webhook(webhook_url)
+    queries = db.query(Query).filter(Query.owner_id == user.id).all() if hasattr(Query, 'owner_id') else db.query(Query).all()
+    owned_acc_ids = _owned_ids(db, user)
+    updated = 0
+    for q in db.query(Query).all():
+        try:
+            acc_ids = {int(t["account_id"]) for t in json.loads(q.bypass_data or "[]") if "account_id" in t}
+        except Exception:
+            acc_ids = set()
+        if aid in acc_ids and acc_ids & owned_acc_ids:
+            q.webhook_url = webhook_url
+            updated += 1
+    db.commit()
+    return {"ok": True, "updated": updated}
+
 @router.patch("/accounts/{aid}/rpc")
 async def update_rpc(aid: int, inp: RpcIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     acc = _get_account(db, aid, user)

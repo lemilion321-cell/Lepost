@@ -448,6 +448,29 @@
     </div>
   </div>
 </div>
+<!-- DIALOG: WEBHOOK -->
+<div id="dlg-webhook" class="overlay" hidden>
+  <div class="dlg dlg-sm" role="dialog" aria-modal="true" aria-labelledby="dlg-webhook-title">
+    <div class="dlg-head">
+      <h2 id="dlg-webhook-title" class="dlg-title">Bulk Update Webhook</h2>
+      <button type="button" class="btn btn-icon" data-act="close" data-dialog="dlg-webhook" aria-label="Tutup">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p id="dlg-webhook-sub" class="hint" style="margin-bottom:12px"></p>
+    <input type="hidden" id="webhook-acc-id">
+    <div class="field">
+      <label class="field-label" for="webhook-url-input">WEBHOOK URL</label>
+      <input type="url" id="webhook-url-input" class="inp" placeholder="https://discord.com/api/webhooks/...">
+      <p class="hint" style="margin-top:4px">Kosongkan untuk menghapus webhook di semua channel akun ini.</p>
+    </div>
+    <div class="dlg-actions" style="margin-top:16px">
+      <button type="button" class="btn" data-act="close" data-dialog="dlg-webhook">Batal</button>
+      <button type="button" id="btn-save-webhook" class="btn btn-primary">Simpan webhook</button>
+    </div>
+  </div>
+</div>
+
 <!-- DIALOG: EDIT TOKEN -->
 <div id="dlg-edit-token" class="overlay" hidden>
   <div class="dlg dlg-sm" role="dialog" aria-modal="true" aria-labelledby="dlg-edit-token-title">
