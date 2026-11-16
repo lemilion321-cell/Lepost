@@ -123,7 +123,7 @@ async def lifespan(app: FastAPI):
     n_task = asyncio.create_task(expiry_notify_loop())
     # Migrasi otomatis kolom baru
     from sqlalchemy import text
-    from app.db import engine
+    from app.models import engine
     with engine.connect() as _conn:
         for _col, _typ in [("dc_id", "VARCHAR(32) DEFAULT ''"), ("dc_avatar", "VARCHAR(128) DEFAULT ''")]:
             try:
