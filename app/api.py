@@ -643,6 +643,8 @@ async def add_account(data: AccountIn, user: User = Depends(current_user), db: S
         owner_id=user.id, label=data.label.strip(),
         token_enc=_enc_token(token), proxy=proxy,
         discord_username=result.get("username", ""),
+        dc_id=str(result.get("id", "")),
+        dc_avatar=result.get("avatar", "") or "",
     )
     db.add(a)
     db.commit()
@@ -1217,6 +1219,8 @@ def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_
             "label": a.label,
             "proxy": a.proxy or "",
             "discord_username": a.discord_username or "",
+            "dc_id": getattr(a, "dc_id", "") or "",
+            "dc_avatar": getattr(a, "dc_avatar", "") or "",
             "discord_status": getattr(a, "discord_status", "online") or "online",
             "discord_custom_text": getattr(a, "discord_custom_text", "") or "",
             "discord_custom_emoji": getattr(a, "discord_custom_emoji", "") or "",

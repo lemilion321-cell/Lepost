@@ -1090,22 +1090,42 @@ function renderAccountList() {
     box.innerHTML = '<p class="hint">Belum ada akun. Tambahkan akun pertamamu di bawah.</p>';
     return;
   }
-  box.innerHTML = state.accounts.map(a => `
-    <div class="acc-row">
-      <div class="acc-id">
-        <span class="avatar" aria-hidden="true">${esc((a.label || '?').charAt(0).toUpperCase())}</span>
-        <div class="acc-text">
-          <p class="acc-name">${esc(a.label)}</p>
-          <p class="acc-meta">@${esc(a.dc_user || a.discord_username || '?')}${a.proxy ? ' · proxy' : ''}</p>
-          <div style="margin-top:4px">${statusBadge(a)}</div>
+  box.innerHTML = state.accounts.map(a => {
+    const avatarUrl = a.dc_id && a.dc_avatar
+      ? `https://cdn.discordapp.com/avatars/${a.dc_id}/${a.dc_avatar}.png?size=64`
+      : null;
+    const avatarHtml = avatarUrl
+      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      : '';
+    const avatarFallback = `<span class="avatar" aria-hidden="true" ${avatarUrl ? 'style="display:none"' : ''}>${esc((a.label||'?').charAt(0).toUpperCase())}</span>`;
+    const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
+    const statusLabels = {online:'Online',idle:'Idle',dnd:'DND',invisible:'Invisible'};
+    const s = a.discord_status || 'online';
+    return `
+    <div class="acc-card">
+      <div class="acc-card-top">
+        <div class="acc-avatar-wrap">
+          ${avatarHtml}${avatarFallback}
+          <span class="acc-status-dot" style="background:${statusColors[s]}" title="${statusLabels[s]}"></span>
+        </div>
+        <div class="acc-card-info">
+          <div class="acc-card-name">${esc(a.label)}</div>
+          <div class="acc-card-user">@${esc(a.dc_user || a.discord_username || '?')}</div>
+          <div class="acc-card-badges">
+            <span class="badge badge-ok">Token aktif</span>
+            <span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">${statusLabels[s]}</span>
+            ${a.keep_online ? '<span class="badge badge-ok">Online 24/7</span>' : ''}
+            ${a.proxy ? '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">Proxy</span>' : ''}
+          </div>
         </div>
       </div>
-      <div class="acc-actions">
-        <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">Atur Status</button>
-        <button type="button" class="btn btn-icon btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" aria-label="Edit token ${esc(a.label)}" title="Ganti token">${icon('key')}</button>
+      <div class="acc-card-actions">
+        <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">${icon('zap')} Atur status</button>
+        <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" title="Ganti token">${icon('key')} Perbarui token</button>
         <button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}" aria-label="Hapus akun ${esc(a.label)}">${icon('trash')}</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderBypassAccounts() {

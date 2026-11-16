@@ -68,6 +68,8 @@ class Account(Base):
     discord_custom_emoji: Mapped[str] = mapped_column(String(64), default="")
     rpc_json: Mapped[str] = mapped_column(Text, default="{}")
     keep_online: Mapped[int] = mapped_column(Integer, default=0)
+    dc_id: Mapped[str] = mapped_column(String(32), default="")
+    dc_avatar: Mapped[str] = mapped_column(String(128), default="")
 
 
 class Query(Base):

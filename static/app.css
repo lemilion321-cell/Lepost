@@ -897,3 +897,85 @@ button.pill { cursor: pointer; font: inherit; }
 /* page-title: judul halaman accounts & admin */
 .page-head { margin-bottom: 20px; }
 .page-title { font-family: var(--serif); font-size: 28px; font-weight: 700; letter-spacing: -.03em; color: var(--text); }
+
+/* ── Account Card Redesign ── */
+.acc-card {
+  background: var(--surface, #1e1e1e);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: border-color .2s;
+}
+.acc-card:hover { border-color: rgba(200,135,74,0.4); }
+
+.acc-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.acc-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+}
+.acc-avatar-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.acc-avatar-wrap .avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: rgba(200,135,74,0.2);
+  color: #c8874a;
+}
+.acc-status-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--bg, #111);
+}
+
+.acc-card-info { flex: 1; min-width: 0; }
+.acc-card-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.acc-card-user {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 2px;
+}
+.acc-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.acc-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.acc-card-actions .btn { font-size: 0.82rem; padding: 5px 12px; }
+.acc-card-actions .btn-icon { padding: 5px 9px; }
