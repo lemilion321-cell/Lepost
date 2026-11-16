@@ -63,6 +63,11 @@ class Account(Base):
     token_enc: Mapped[str] = mapped_column(Text)
     proxy: Mapped[str] = mapped_column(String(255), default="")
     discord_username: Mapped[str] = mapped_column(String(64), default="")
+    discord_status: Mapped[str] = mapped_column(String(16), default="online")
+    discord_custom_text: Mapped[str] = mapped_column(String(128), default="")
+    discord_custom_emoji: Mapped[str] = mapped_column(String(64), default="")
+    rpc_json: Mapped[str] = mapped_column(Text, default="{}")
+    keep_online: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class Query(Base):
@@ -127,6 +132,20 @@ def _migrate():
             if "allow_dashboard" not in cols:
                 con.execute(text("ALTER TABLE licenses ADD COLUMN allow_dashboard BOOLEAN NOT NULL DEFAULT FALSE"))
 
+
+    if "accounts" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("accounts")}
+        with engine.begin() as con:
+            if "discord_status" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN discord_status VARCHAR(16) NOT NULL DEFAULT 'online'"))
+            if "discord_custom_text" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN discord_custom_text VARCHAR(128) NOT NULL DEFAULT ''"))
+            if "discord_custom_emoji" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN discord_custom_emoji VARCHAR(64) NOT NULL DEFAULT ''"))
+            if "rpc_json" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN rpc_json TEXT NOT NULL DEFAULT '{}'"))
+            if "keep_online" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN keep_online INTEGER NOT NULL DEFAULT 0"))
 
 def init_db():
     Base.metadata.create_all(engine)
