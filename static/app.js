@@ -169,7 +169,9 @@ async function submitLogin(e) {
     })});
     if (!r.token) throw new Error('Respons login tidak valid.');
     localStorage.setItem('token', r.token);
-    location.reload();
+    state.token = r.token;
+    location.href = '#dashboard';
+    boot();
   } catch (ex) {
     err.textContent = 'Login gagal: ' + ex.message;
     err.hidden = false;
@@ -200,7 +202,9 @@ async function submitSignup(e) {
     })});
     if (!r.token) throw new Error('Respons daftar tidak valid.');
     localStorage.setItem('token', r.token);
-    location.reload();
+    state.token = r.token;
+    location.href = '#dashboard';
+    boot();
   } catch (ex) {
     err.textContent = 'Daftar gagal: ' + ex.message;
     err.hidden = false;
