@@ -1222,6 +1222,7 @@ def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_
             "discord_custom_emoji": getattr(a, "discord_custom_emoji", "") or "",
             "keep_online": getattr(a, "keep_online", 0) or 0,
             "rpc_json": getattr(a, "rpc_json", "{}") or "{}",
+            "avatar": getattr(a, "avatar", "") or "",
         }
         for a in accs
     ]

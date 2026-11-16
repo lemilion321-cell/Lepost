@@ -165,7 +165,7 @@ class GatewayClient:
             if self.custom_emoji:
                 custom["emoji"] = {"name": self.custom_emoji}
             acts.insert(0, custom)
-        return {"op": 3, "d": {"since": None, "activities": acts, "status": self.status, "afk": False}}
+        return {"op": 3, "d": {"since": 0, "activities": acts, "status": self.status, "afk": False}}
 
     async def _run(self):
         while self._running:

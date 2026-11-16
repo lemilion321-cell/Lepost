@@ -1088,7 +1088,8 @@ function renderAccountList() {
         <span class="avatar" aria-hidden="true">${esc((a.label || '?').charAt(0).toUpperCase())}</span>
         <div class="acc-text">
           <p class="acc-name">${esc(a.label)}</p>
-          <p class="acc-meta">@${esc(a.dc_user || '?')}${a.proxy ? ' · proxy' : ''}</p>
+          <p class="acc-meta">@${esc(a.dc_user || a.discord_username || '?')}${a.proxy ? ' · proxy' : ''}</p>
+          <div style="margin-top:4px">${statusBadge(a)}</div>
         </div>
       </div>
       <div class="acc-actions">
