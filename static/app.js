@@ -1121,8 +1121,8 @@ function renderAccountList() {
       </div>
       <div class="acc-card-actions">
         <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">${icon('zap')} Atur status</button>
+        <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}" title="Bulk update webhook">${icon('bell')} Webhook</button>
         <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}" title="Ganti token">${icon('key')} Perbarui token</button>
-        <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}" title="Bulk update webhook">${icon('link')} Webhook</button>
         <button type="button" class="btn btn-icon btn-danger btn-sm" data-act="del-acc" data-id="${a.id}" aria-label="Hapus akun ${esc(a.label)}">${icon('trash')}</button>
       </div>
     </div>`;
