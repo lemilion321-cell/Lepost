@@ -729,7 +729,7 @@ function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
   if (tab === 'logs') return loadLogs();
   if (tab === 'rpc') { loadAccounts().then(() => loadRpcPage()); return; }
-  if (tab === 'accounts') return renderAccountList();
+  if (tab === 'accounts') { loadAccounts().then(() => renderAccountList()); return; }
   if (tab === 'admin') { setAdminTab('keys'); return; }
   return loadQueries();
 }

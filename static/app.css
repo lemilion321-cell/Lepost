@@ -979,3 +979,26 @@ button.pill { cursor: pointer; font: inherit; }
 }
 .acc-card-actions .btn { font-size: 0.82rem; padding: 5px 12px; }
 .acc-card-actions .btn-icon { padding: 5px 9px; }
+
+/* ── Dialog / Modal ── */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.dialog-overlay[hidden] { display: none !important; }
+.dialog {
+  background: #1e1f22;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
