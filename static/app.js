@@ -170,7 +170,11 @@ async function submitLogin(e) {
     if (!r.token) throw new Error('Respons login tidak valid.');
     localStorage.setItem('token', r.token);
     state.token = r.token;
-    location.href = '#dashboard';
+    const vl = document.getElementById('view-login');
+    if (vl) vl.hidden = true;
+    const app = document.getElementById('app');
+    if (app) app.hidden = false;
+    location.hash = '#dashboard';
     boot();
   } catch (ex) {
     err.textContent = 'Login gagal: ' + ex.message;
@@ -203,7 +207,11 @@ async function submitSignup(e) {
     if (!r.token) throw new Error('Respons daftar tidak valid.');
     localStorage.setItem('token', r.token);
     state.token = r.token;
-    location.href = '#dashboard';
+    const vl = document.getElementById('view-login');
+    if (vl) vl.hidden = true;
+    const app = document.getElementById('app');
+    if (app) app.hidden = false;
+    location.hash = '#dashboard';
     boot();
   } catch (ex) {
     err.textContent = 'Daftar gagal: ' + ex.message;
