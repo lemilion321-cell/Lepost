@@ -307,7 +307,7 @@ function openLicense(opener) {
     : row('Akun', esc(m.username))
       + row('Sisa masa aktif', m.expired ? '<span style="color:#ffb4b4">Habis</span>' : esc(fmtLeft(m.seconds_left)))
       + row('Akun Discord', `${m.accounts} / ${lim(m.max_accounts)}`)
-      + row('Channel', `${m.channels} / ${lim(m.max_channels)}`);
+      + row('Query', `${m.queries} / ${lim(m.max_queries)}`);
   $('lic-contact').innerHTML = state.contact
     ? '<h3 class="sub-h">Beli / perpanjang key</h3>' + contactHtml(state.contact)
     : '';
@@ -423,7 +423,7 @@ async function loadAdminStats() {
                   <p class="acc-name">${esc(u.username)}</p>
                   <span class="badge badge-ok">Aktif</span>
                 </div>
-                <p class="acc-meta">Sisa ${esc(fmtLeft(u.seconds_left))} · akun ${u.accounts}/${lim(u.max_accounts)} · ch ${u.channels}/${lim(u.max_channels)}</p>
+                <p class="acc-meta">Sisa ${esc(fmtLeft(u.seconds_left))} · akun ${u.accounts}/${lim(u.max_accounts)} · query ${u.queries}/${lim(u.max_queries)}</p>
                 <div class="row-actions">
                   <button type="button" class="btn btn-sm btn-danger" data-act="admin-stop-user" data-id="${u.id}" data-name="${esc(u.username)}">Stop Query</button>
                 </div>
@@ -452,13 +452,13 @@ async function adminStopAll() {
 async function exportUsersCSV() {
   try {
     const users = await api('/admin/users');
-    const rows = [['username','status','sisa_hari','max_accounts','max_channels','expires_at']];
+    const rows = [['username','status','sisa_hari','max_accounts','max_queries','expires_at']];
     users.forEach(u => rows.push([
       u.username,
       u.is_admin ? 'admin' : u.expired ? 'expired' : 'aktif',
       u.seconds_left != null ? Math.floor(u.seconds_left / 86400) : '∞',
       u.max_accounts || '∞',
-      u.max_channels || '∞',
+      u.max_queries || '∞',
       u.expires_at || '-',
     ]));
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -517,7 +517,7 @@ async function loadAdminKeys() {
               <p class="acc-name key-code">${esc(k.key)}</p>
               <span class="badge ${k.used_by ? 'badge-bad' : 'badge-ok'}">${k.used_by ? 'Terpakai' : 'Tersedia'}</span>
             </div>
-            <p class="acc-meta">${k.days} hari · akun ${lim(k.max_accounts)} · channel ${lim(k.max_channels)}${k.allow_bypass ? ' · <b>Bypass</b>' : ''}${k.allow_dashboard ? ' · <b>Dashboard</b>' : ''}${k.note ? ' · ' + esc(k.note) : ''}${k.used_by ? ' · oleh ' + esc(k.used_by) : ''}</p>
+            <p class="acc-meta">${k.days} hari · akun ${lim(k.max_accounts)} · query ${lim(k.max_queries)}${k.allow_bypass ? ' · <b>Bypass</b>' : ''}${k.allow_dashboard ? ' · <b>Dashboard</b>' : ''}${k.note ? ' · ' + esc(k.note) : ''}${k.used_by ? ' · oleh ' + esc(k.used_by) : ''}</p>
             <div class="row-actions">
               <button type="button" class="btn btn-sm" data-act="copy-key" data-key="${esc(k.key)}">Salin</button>
               ${k.used_by ? `<button type="button" class="btn btn-sm btn-danger" data-act="revoke-key" data-id="${k.id}">Revoke</button>` : `<button type="button" class="btn btn-sm btn-danger" data-act="del-key" data-id="${k.id}">Hapus</button>`}
@@ -532,7 +532,7 @@ async function submitKey(e) {
   const num = (id, d) => { const v = parseInt($(id).value, 10); return Number.isFinite(v) ? v : d; };
   const body = {
     days: num('key-days', 30), count: num('key-count', 1),
-    max_accounts: num('key-acc', 1), max_channels: num('key-ch', 1),
+    max_accounts: num('key-acc', 1), max_queries: num('key-ch', 1),
     note: $('key-note').value.trim(),
     allow_bypass: $('key-bypass')?.checked ?? false,
     allow_dashboard: $('key-dashboard')?.checked ?? false,
@@ -561,7 +561,7 @@ async function loadAdminUsers() {
           <p class="acc-name">${esc(u.username)}</p>
           <span class="badge ${u.is_admin ? 'badge-adm' : u.is_suspended ? 'badge-bad' : u.expired ? 'badge-bad' : 'badge-ok'}">${u.is_admin ? 'Admin' : u.is_suspended ? 'Suspended' : u.expired ? 'Habis' : 'Aktif'}</span>
         </div>
-        <p class="acc-meta">${u.is_admin ? 'Tanpa batas' : `Sisa ${esc(fmtLeft(u.seconds_left))} (s/d ${fmtDate(u.expires_at)})`} · akun ${u.accounts}/${lim(u.max_accounts)} · channel ${u.channels}/${lim(u.max_channels)}</p>
+        <p class="acc-meta">${u.is_admin ? 'Tanpa batas' : `Sisa ${esc(fmtLeft(u.seconds_left))} (s/d ${fmtDate(u.expires_at)})`} · akun ${u.accounts}/${lim(u.max_accounts)} · query ${u.queries}/${lim(u.max_queries)}</p>
         ${u.is_admin ? '' : `
         <div class="row-actions" style="margin-top:6px">
           <button type="button" class="btn btn-sm btn-ghost" data-act="toggle-user-edit" data-id="${u.id}">Edit</button>
@@ -573,7 +573,7 @@ async function loadAdminUsers() {
           <input class="input" data-f="days" type="number" inputmode="numeric" placeholder="+/- hari" aria-label="Tambah hari">
           <input class="input" data-f="pw" type="text" autocomplete="off" placeholder="Password baru" aria-label="Password baru">
           <input class="input" data-f="acc" type="number" min="0" inputmode="numeric" placeholder="Limit akun (${lim(u.max_accounts)})" aria-label="Limit akun">
-          <input class="input" data-f="ch" type="number" min="0" inputmode="numeric" placeholder="Limit channel (${lim(u.max_channels)})" aria-label="Limit channel">
+          <input class="input" data-f="ch" type="number" min="0" inputmode="numeric" placeholder="Limit query (${lim(u.max_queries)})" aria-label="Limit query">
         </div>
         <div class="two-col" style="margin-top:4px">
           <label class="label"><input type="checkbox" data-f="bypass" ${u.allow_bypass ? 'checked' : ''}> Allow Bypass</label>
@@ -593,7 +593,7 @@ async function saveUser(id, el) {
   const body = {};
   if (v('days') !== '') body.add_days = parseInt(v('days'), 10);
   if (v('acc')  !== '') body.max_accounts = parseInt(v('acc'), 10);
-  if (v('ch')   !== '') body.max_channels  = parseInt(v('ch'), 10);
+  if (v('ch')   !== '') body.max_queries  = parseInt(v('ch'), 10);
   if (v('pw')   !== '') body.new_password  = v('pw');
   const chkBypass = row.querySelector('[data-f="bypass"]');
   const chkDash = row.querySelector('[data-f="dashboard"]');

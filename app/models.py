@@ -106,7 +106,7 @@ class UserLicense(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
     expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     max_accounts: Mapped[int] = mapped_column(Integer, default=1)
-    max_channels: Mapped[int] = mapped_column(Integer, default=5)
+    max_queries: Mapped[int] = mapped_column(Integer, default=5)
     allow_bypass: Mapped[bool] = mapped_column(Boolean, default=False)
     allow_dashboard: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -133,6 +133,18 @@ def _migrate():
                 con.execute(text("ALTER TABLE licenses ADD COLUMN allow_bypass BOOLEAN NOT NULL DEFAULT FALSE"))
             if "allow_dashboard" not in cols:
                 con.execute(text("ALTER TABLE licenses ADD COLUMN allow_dashboard BOOLEAN NOT NULL DEFAULT FALSE"))
+            if "max_queries" not in cols and "max_channels" in cols:
+                con.execute(text("ALTER TABLE licenses RENAME COLUMN max_channels TO max_queries"))
+            elif "max_queries" not in cols:
+                con.execute(text("ALTER TABLE licenses ADD COLUMN max_queries INTEGER NOT NULL DEFAULT 5"))
+
+    if "user_licenses" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("user_licenses")}
+        with engine.begin() as con:
+            if "max_queries" not in cols and "max_channels" in cols:
+                con.execute(text("ALTER TABLE user_licenses RENAME COLUMN max_channels TO max_queries"))
+            elif "max_queries" not in cols:
+                con.execute(text("ALTER TABLE user_licenses ADD COLUMN max_queries INTEGER NOT NULL DEFAULT 5"))
 
 
     if "accounts" in insp.get_table_names():

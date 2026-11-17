@@ -52,7 +52,7 @@ class License(Base):
     key = Column(String(64), unique=True, index=True)
     days = Column(Integer, default=30)
     max_accounts = Column(Integer, default=1)   # 0 = tidak terbatas
-    max_channels = Column(Integer, default=5)   # 0 = tidak terbatas
+    max_queries = Column(Integer, default=5)   # 0 = tidak terbatas
     allow_bypass = Column(Boolean, default=False)
     allow_dashboard = Column(Boolean, default=False)
     note = Column(String(64), default="")
@@ -228,24 +228,20 @@ def _user_account_count(db: Session, uid: int) -> int:
     return db.query(Account).filter_by(owner_id=uid).count()
 
 
-def _user_channel_count(db: Session, uid: int) -> int:
-    """Jumlah channel unik dari semua query milik user."""
+def _user_query_count(db: Session, uid: int) -> int:
+    """Jumlah total query milik user."""
     acc_ids = {i for (i,) in db.query(Account.id).filter(Account.owner_id == uid).all()}
     if not acc_ids:
         return 0
-    # Bug #6 fix: jangan scan semua query dari semua user (O(n) full table scan).
-    # Ambil hanya channel_id dari query yang bypass_data mengandung akun milik user ini.
-    # Karena bypass_data adalah JSON text, kita tetap perlu iterasi, tapi filter dulu
-    # via subquery channel_id distinct — kalau data besar bisa diindeks nanti.
-    ch_ids = set()
-    for q in db.query(Query.channel_id, Query.bypass_data).all():
+    count = 0
+    for q in db.query(Query.bypass_data).all():
         try:
             q_acc_ids = {int(t["account_id"]) for t in json.loads(q.bypass_data or "[]")}
         except (ValueError, KeyError, TypeError):
             q_acc_ids = set()
         if q_acc_ids & acc_ids:
-            ch_ids.add(q.channel_id)
-    return len(ch_ids)
+            count += 1
+    return count
 
 
 def _gen_key() -> str:
@@ -276,11 +272,11 @@ def _user_out(u: User, db: Session) -> dict:
         "seconds_left": sec,
         "expires_at": _iso(ul.expires_at) if ul else None,
         "max_accounts": ul.max_accounts if ul else 1,
-        "max_channels": ul.max_channels if ul else 5,
+        "max_queries": ul.max_queries if ul else 5,
         "allow_bypass": ul.allow_bypass if ul else False,
         "allow_dashboard": ul.allow_dashboard if ul else False,
         "accounts": _user_account_count(db, u.id),
-        "channels": _user_channel_count(db, u.id),
+        "queries": _user_query_count(db, u.id),
         "is_suspended": u.is_suspended,
     }
 
@@ -356,7 +352,7 @@ class KeyIn(BaseModel):
     days: int = Field(default=30, ge=1, le=3650)
     count: int = Field(default=1, ge=1, le=100)
     max_accounts: int = Field(default=1, ge=0)
-    max_channels: int = Field(default=5, ge=0)
+    max_queries: int = Field(default=5, ge=0)
     allow_bypass: bool = False
     allow_dashboard: bool = False
     note: str = Field(default="", max_length=64)
@@ -366,7 +362,7 @@ class UserPatch(BaseModel):
     add_days: Optional[int] = None
     new_password: Optional[str] = Field(default=None, min_length=6)
     max_accounts: Optional[int] = Field(default=None, ge=0)
-    max_channels: Optional[int] = Field(default=None, ge=0)
+    max_queries: Optional[int] = Field(default=None, ge=0)
     allow_bypass: Optional[bool] = None
     allow_dashboard: Optional[bool] = None
 
@@ -424,7 +420,7 @@ def signup(inp: SignupIn, request: Request, db: Session = Depends(get_db)):
         user_id=u.id,
         expires_at=utcnow() + timedelta(days=lic.days),
         max_accounts=lic.max_accounts,
-        max_channels=lic.max_channels,
+        max_queries=lic.max_queries,
         allow_bypass=lic.allow_bypass,
         allow_dashboard=lic.allow_dashboard,
     ))
@@ -535,11 +531,11 @@ def redeem(inp: RedeemIn, user: User = Depends(current_user), db: Session = Depe
     if ul:
         ul.expires_at = new_exp
         ul.max_accounts = lic.max_accounts
-        ul.max_channels = lic.max_channels
+        ul.max_queries = lic.max_queries
     else:
         db.add(UserLicense(
             user_id=user.id, expires_at=new_exp,
-            max_accounts=lic.max_accounts, max_channels=lic.max_channels, allow_bypass=lic.allow_bypass, allow_dashboard=lic.allow_dashboard,
+            max_accounts=lic.max_accounts, max_queries=lic.max_queries, allow_bypass=lic.allow_bypass, allow_dashboard=lic.allow_dashboard,
         ))
     lic.used_by = user.id
     lic.used_at = now
@@ -749,29 +745,19 @@ def add_query(data: QueryIn, user: User = Depends(current_user), db: Session = D
     _require_active_license(db, user)
     if not user.is_admin:
         ul = _get_ul(db, user.id)
-        if ul and ul.max_channels > 0:
-            # Bug fix: 1x scan untuk hitung existing_channels, channel unik, DAN same_ch_count
-            # (sebelumnya 3x full table scan terpisah + tidak ada try/except di same_ch_count)
+        if ul and ul.max_queries > 0:
+            # Hitung total query milik user (lewat akun yang dimiliki)
             acc_ids = _owned_ids(db, user)
-            existing_channels: set = set()
-            same_ch_count = 0
-            for q in db.query(Query.channel_id, Query.bypass_data).all():
+            total_queries = 0
+            for q in db.query(Query.bypass_data).all():
                 try:
                     q_acc_ids = {int(t["account_id"]) for t in json.loads(q.bypass_data or "[]") if "account_id" in t}
                 except (ValueError, KeyError, TypeError):
                     q_acc_ids = set()
-                if not (q_acc_ids & acc_ids):
-                    continue
-                existing_channels.add(q.channel_id)
-                if q.channel_id == data.channel_id:
-                    same_ch_count += 1
-
-            is_new_channel = data.channel_id not in existing_channels
-            cur = len(existing_channels)
-            if is_new_channel and cur >= ul.max_channels:
-                raise HTTPException(403, f"Sudah mencapai limit {ul.max_channels} channel. Hapus query di channel lain dulu.")
-            if same_ch_count >= 10:
-                raise HTTPException(403, "Maksimal 10 query per channel")
+                if q_acc_ids & acc_ids:
+                    total_queries += 1
+            if total_queries >= ul.max_queries:
+                raise HTTPException(403, f"Sudah mencapai limit {ul.max_queries} query. Hapus query lain dulu.")
     q = Query(
         query_type=data.query_type,
         bypass_data=json.dumps([_dump(t) for t in data.bypass_data]),
@@ -840,7 +826,7 @@ def admin_list_keys(user: User = Depends(current_user), db: Session = Depends(ge
             "key": k.key,
             "days": k.days,
             "max_accounts": k.max_accounts,
-            "max_channels": k.max_channels,
+            "max_queries": k.max_queries,
             "note": k.note,
             "used_by": used_name,
             "used_at": _iso(k.used_at),
@@ -865,7 +851,7 @@ def admin_create_keys(inp: KeyIn, user: User = Depends(current_user), db: Sessio
             raise HTTPException(500, "Gagal generate key unik, coba lagi.")
         lic = License(
             key=k, days=inp.days,
-            max_accounts=inp.max_accounts, max_channels=inp.max_channels,
+            max_accounts=inp.max_accounts, max_queries=inp.max_queries,
             note=inp.note.strip(),
             allow_bypass=inp.allow_bypass,
             allow_dashboard=inp.allow_dashboard,
@@ -903,7 +889,7 @@ def admin_patch_user(uid: int, inp: UserPatch, user: User = Depends(current_user
             ul = UserLicense(user_id=uid, expires_at=new_exp)
             db.add(ul)
     # jika ul belum ada tapi admin mau set limit akun/channel, buat dulu
-    if ul is None and (inp.max_accounts is not None or inp.max_channels is not None):
+    if ul is None and (inp.max_accounts is not None or inp.max_queries is not None):
         ul = UserLicense(user_id=uid, expires_at=None)
         db.add(ul)
     if ul is None and (inp.allow_bypass is not None or inp.allow_dashboard is not None):
@@ -912,8 +898,8 @@ def admin_patch_user(uid: int, inp: UserPatch, user: User = Depends(current_user
     if ul:
         if inp.max_accounts is not None:
             ul.max_accounts = inp.max_accounts
-        if inp.max_channels is not None:
-            ul.max_channels = inp.max_channels
+        if inp.max_queries is not None:
+            ul.max_queries = inp.max_queries
         if inp.allow_bypass is not None:
             ul.allow_bypass = inp.allow_bypass
         if inp.allow_dashboard is not None:
