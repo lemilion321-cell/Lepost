@@ -616,29 +616,6 @@ def get_logs(limit: int = 50, user: User = Depends(current_user), db: Session = 
 
 
 # ─────────────────────────── accounts ───────────────────────────
-@router.get("/accounts")
-def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    accs = db.query(Account).filter_by(owner_id=user.id).order_by(Account.id).all()
-    return [
-        {
-            "id": a.id,
-            "label": a.label,
-            "dc_user": a.discord_username or "",
-            "proxy": bool(a.proxy),
-            "discord_username": a.discord_username or "",
-            "dc_id": getattr(a, "dc_id", "") or "",
-            "dc_avatar": getattr(a, "dc_avatar", "") or "",
-            "discord_status": getattr(a, "discord_status", "online") or "online",
-            "discord_custom_text": getattr(a, "discord_custom_text", "") or "",
-            "discord_custom_emoji": getattr(a, "discord_custom_emoji", "") or "",
-            "keep_online": getattr(a, "keep_online", 0) or 0,
-            "rpc_json": getattr(a, "rpc_json", "{}") or "{}",
-            "avatar": getattr(a, "avatar", "") or "",
-        }
-        for a in accs
-    ]
-
-
 @router.post("/accounts")
 async def add_account(data: AccountIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     token, proxy = data.token.strip(), data.proxy.strip()
@@ -897,19 +874,6 @@ def admin_create_keys(inp: KeyIn, user: User = Depends(current_user), db: Sessio
         created.append(k)
     db.commit()
     return [{"key": k} for k in created]
-
-
-@router.delete("/admin/keys/{kid}")
-def admin_del_key(kid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    _require_admin(user)
-    lic = db.get(License, kid)
-    if not lic:
-        raise HTTPException(404, "Key tidak ditemukan")
-    if lic.used_by:
-        raise HTTPException(400, "Key sudah dipakai, tidak bisa dihapus")
-    db.delete(lic)
-    db.commit()
-    return {"ok": True}
 
 
 # ─────────────────────────── admin: users ───────────────────────────
