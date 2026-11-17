@@ -2277,7 +2277,7 @@ async function loadRpcPage() {
         <label class="label" style="display:flex;align-items:center;gap:8px">
           <input type="checkbox" id="rpc-elapsed" ${rpc.elapsed?'checked':''}> Elapsed time (waktu berjalan)
         </label>
-        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        <div id="rpc-elapsed-fields" style="margin-top:8px;flex-direction:column;gap:6px;display:${rpc.elapsed?'flex':'none'}">
           <div style="display:flex;align-items:center;gap:8px">
             <input id="rpc-elapsed-h" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_h||0}" style="flex:1"> <span style="min-width:40px">jam</span>
           </div>
