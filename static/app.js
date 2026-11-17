@@ -746,12 +746,12 @@ function showTab(tab) {
   loadStats();
   loadView(tab);
 }
-window.addEventListener('hashchange', () => { window.scrollTo(0, 0); showTab(currentRoute()); });
+window.addEventListener('hashchange', () => { const t = currentRoute(); if (t !== 'rpc') window.scrollTo(0, 0); showTab(t); });
 
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
   if (tab === 'logs') return loadLogs();
-  if (tab === 'rpc') { loadAccounts().then(() => loadRpcPage()); return; }
+  if (tab === 'rpc') { if (!document.getElementById('btn-save-rpc')) loadAccounts().then(() => loadRpcPage()); return; }
   if (tab === 'accounts') { loadAccounts().then(() => renderAccountList()); return; }
   if (tab === 'admin') { setAdminTab('keys'); return; }
   return loadQueries();
