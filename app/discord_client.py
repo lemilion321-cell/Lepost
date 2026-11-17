@@ -107,6 +107,10 @@ class Discord:
     async def get_channels(self, gid):
         return await self._req("GET", f"/guilds/{gid}/channels")
 
+    async def get_channel(self, ch):
+        """Detail 1 channel (buat baca slowmode asli: rate_limit_per_user)."""
+        return await self._req("GET", f"/channels/{ch}")
+
     async def send(self, ch: str, content: str, embed: Optional[dict] = None, react: str = ""):
         payload: dict = {}
         if content:
@@ -130,6 +134,8 @@ class Discord:
         if "error" not in res and react and res.get("id"):
             await self._req("PUT", f"/channels/{ch}/messages/{res['id']}/reactions/{quote(react)}/@me")
         return res
+
+
 import time
 
 GATEWAY_URL = "wss://gateway.discord.gg/?v=10&encoding=json"

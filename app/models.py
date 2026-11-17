@@ -90,6 +90,14 @@ class Query(Base):
     last_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
+class ChannelState(Base):
+    """Penjaga anti-dobel per channel: kapan channel ini boleh dikirimi pesan lagi.
+    Disimpan di DB (bukan di memori) supaya tetap berlaku walau ada lebih dari satu proses."""
+    __tablename__ = "channel_state"
+    channel_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    next_allowed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
 class Log(Base):
     __tablename__ = "logs"
     id: Mapped[int] = mapped_column(primary_key=True)
