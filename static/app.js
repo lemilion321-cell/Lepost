@@ -670,6 +670,17 @@ function initHeroCounters() {
     }
     requestAnimationFrame(step);
   });
+  const btnDis = $('btn-disable-rpc');
+  if (btnDis) btnDis.addEventListener('click', async () => {
+    setBusy(btnDis, true);
+    try {
+      await api(`/accounts/${_rpcAccId}/rpc`, { method: 'PATCH', body: JSON.stringify({ rpc_json: JSON.stringify({enabled:false}) }) });
+      toast('RPC dinonaktifkan.');
+      await loadAccounts();
+      loadRpcPage();
+    } catch(err) { toast(err.message, true); }
+    finally { setBusy(btnDis, false); }
+  });
 }
 
 /* ───────── dialog ───────── */
@@ -2284,7 +2295,7 @@ async function loadRpcPage() {
           </div>
         </div>
       </div>
-      <button type="button" id="btn-save-rpc" class="btn btn-primary" style="margin-top:16px">Simpan dan aktifkan RPC</button>
+      <div style="display:flex;gap:8px;margin-top:16px"><button type="button" id="btn-save-rpc" class="btn btn-primary">Simpan dan aktifkan RPC</button><button type="button" id="btn-disable-rpc" class="btn btn-danger">Nonaktifkan</button></div>
       <p class="hint" style="margin-top:8px">Tombol RPC tidak terlihat di profil sendiri, hanya oleh orang lain.</p>
     </div>
   `;
