@@ -195,7 +195,9 @@ async def _post_once(cfg: dict, turn: int) -> bool:
         if code == 401:
             _log(qid, "ERROR", f"[{acc['label']}] Token tidak valid (401). Ganti token akun lewat menu Akun → Edit Token.")
         elif code == 429:
-            _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Worker akan coba lagi setelah delay.")
+            retry_after = res.get("retry_after", 5)
+            _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Worker nunggu {retry_after:.0f}s sebelum lanjut.")
+            await asyncio.sleep(float(retry_after) + 1.0)
         elif code == "NETWORK":
             _log(qid, "ERROR", f"[{acc['label']}] Gagal kirim (network error): {detail}")
         else:

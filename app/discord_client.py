@@ -58,7 +58,7 @@ class Discord:
             async with self.session.request(method, DISCORD_API + path, **kw) as r:
                 txt = await r.text()
 
-                if r.status == 429 and _retry < MAX_RETRY_429:
+                if r.status == 429:
                     wait = 5.0
                     try:
                         wait = float(json.loads(txt).get("retry_after", r.headers.get("Retry-After", 5)))
@@ -67,8 +67,18 @@ class Discord:
                             wait = float(r.headers.get("Retry-After", 5))
                         except (TypeError, ValueError):
                             pass
-                    await asyncio.sleep(min(max(wait, 1.0), 120.0) + 0.5)
-                    return await self._req(method, path, _retry + 1, **kw)
+                    wait = min(max(wait, 1.0), 300.0)
+                    if _retry < MAX_RETRY_429:
+                        await asyncio.sleep(wait + 0.5)
+                        return await self._req(method, path, _retry + 1, **kw)
+                    # Habis retry — kembalikan error dengan retry_after supaya worker bisa sleep
+                    msg = txt[:200]
+                    try:
+                        msg = json.loads(txt).get("message", msg)
+                    except Exception:
+                        pass
+                    log.warning("Discord API %s %s -> 429 (habis retry): %s", method, path, msg)
+                    return {"error": 429, "message": msg, "retry_after": wait, "body": txt}
 
                 if r.status >= 400:
                     msg = txt[:200]
