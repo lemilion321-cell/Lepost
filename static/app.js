@@ -3,7 +3,7 @@
    Perbaikan: /me, /public, /signup, /redeem, /admin/*, broadcast, grafik, undefined. */
 
 const API = '/api';
-const TABS = ['dashboard', 'posts', 'bypass', 'logs', 'accounts', 'admin'];
+const TABS = ['dashboard', 'posts', 'bypass', 'logs', 'accounts', 'rpc', 'admin'];
 const REFRESH_MS = 10000;
 
 const state = {
