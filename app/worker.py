@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import random
+import time
 from datetime import datetime
 
 import aiohttp
@@ -130,8 +131,13 @@ def _owner_license_expired(q_id: int) -> bool:
         db.close()
 
 
-async def _validate_token(acc: dict, qid: int) -> bool:
-    """Cek token masih valid sebelum mulai posting. Return False kalau gagal."""
+_INVALID_TOKEN = "INVALID_TOKEN"  # sentinel return value dari _validate_token
+
+
+async def _validate_token(acc: dict, qid: int):
+    """Cek token masih valid sebelum mulai posting.
+    Return True kalau OK, False kalau error sementara (network/429),
+    'INVALID_TOKEN' kalau token benar-benar tidak valid (401/403)."""
     try:
         async with Discord(acc["token"], acc["proxy"]) as dc:
             res = await dc.me()
@@ -140,11 +146,10 @@ async def _validate_token(acc: dict, qid: int) -> bool:
             msg = res.get("message", "")
             if code == 401:
                 _log(qid, "ERROR", f"[{acc['label']}] Token tidak valid (401). Query dihentikan otomatis. Ganti token lewat menu Akun → Edit Token.")
-                return "INVALID_TOKEN"
+                return _INVALID_TOKEN
             elif code == 403:
                 _log(qid, "ERROR", f"[{acc['label']}] Token diblokir (403). Query dihentikan otomatis. Ganti token lewat menu Akun → Edit Token.")
-                return "INVALID_TOKEN"
-                _log(qid, "ERROR", f"[{acc['label']}] Token diblokir / akses ditolak (403). Ganti token akun.")
+                return _INVALID_TOKEN
             elif code == 429:
                 retry = res.get("message", "")
                 _log(qid, "ERROR", f"[{acc['label']}] Rate limit saat validasi token (429). {retry}. Coba lagi nanti.")
@@ -153,7 +158,6 @@ async def _validate_token(acc: dict, qid: int) -> bool:
             else:
                 _log(qid, "ERROR", f"[{acc['label']}] Validasi token gagal ({code}): {msg}")
             return False
-        username = res.get("username", acc["user"])
         return True
     except asyncio.CancelledError:
         raise
@@ -194,6 +198,7 @@ async def _post_once(cfg: dict, turn: int) -> bool:
         detail = res.get("message") or ""
         if code == 401:
             _log(qid, "ERROR", f"[{acc['label']}] Token tidak valid (401). Ganti token akun lewat menu Akun → Edit Token.")
+            return _INVALID_TOKEN
         elif code == 429:
             retry_after = res.get("retry_after", 5)
             _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Worker nunggu {retry_after:.0f}s sebelum lanjut.")
@@ -281,7 +286,7 @@ async def run_query_loop(q_id: int):
                             all_ok = False
                             continue
                         ok = await _validate_token(acc, q_id)
-                        if not ok:
+                        if ok == _INVALID_TOKEN or not ok:
                             all_ok = False
                     if not all_ok:
                         # Stop query kalau ada token invalid
@@ -323,7 +328,7 @@ async def run_query_loop(q_id: int):
                 return
 
             attempted = await _post_once(cfg, turn)
-            if attempted == "INVALID_TOKEN":
+            if attempted == _INVALID_TOKEN:
                 db = SessionLocal()
                 try:
                     q = db.get(Query, q_id)

@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 """
 api.py — LePost backend (merged)
 Semua endpoint dari source_lama + endpoint baru untuk ui_baru:
@@ -9,7 +8,7 @@ import os
 import re
 import secrets
 import string
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import Request, APIRouter, Depends, HTTPException
@@ -400,6 +399,8 @@ def register(inp: RegisterIn, user: User = Depends(current_user), db: Session = 
 def signup(inp: SignupIn, request: Request, db: Session = Depends(get_db)):
     """Daftar mandiri pakai key dari admin."""
     client_ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+    # Rate limit: cegah brute-force key / spam akun
+    check_rate_limit(client_ip)
     # Bug #1 fix: SELECT FOR UPDATE untuk hindari race condition dua request
     # dengan username berbeda tapi key sama lolos cek used_by bersamaan
     lic = db.query(License).filter_by(key=inp.key.upper()).with_for_update().first()

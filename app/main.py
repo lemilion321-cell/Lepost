@@ -135,7 +135,7 @@ async def lifespan(app: FastAPI):
     try:
         from app.models import SessionLocal as _SL, Account
         from app.discord_client import Discord
-        from app.auth import decrypt_token as _dec
+        from app.api import _dec_token as _dec
         _db = _SL()
         _accs = _db.query(Account).filter((Account.dc_id == None) | (Account.dc_id == "")).all()
         for _a in _accs:
