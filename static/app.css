@@ -977,7 +977,7 @@ button.pill { cursor: pointer; font: inherit; }
   flex-wrap: wrap;
   align-items: center;
 }
-.acc-card-actions .btn { font-size: 0.82rem; padding: 5px 12px; flex: 1; text-align: center; justify-content: center; }
+.acc-card-actions .btn { font-size: 0.82rem; padding: 5px 12px; flex: 1 1 0; width: 0; text-align: center; justify-content: center; }
 .acc-card-actions .btn-icon { padding: 5px 9px; }
 
 /* ── Dialog / Modal ── */
