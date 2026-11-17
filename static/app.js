@@ -670,17 +670,6 @@ function initHeroCounters() {
     }
     requestAnimationFrame(step);
   });
-  const btnDis = $('btn-disable-rpc');
-  if (btnDis) btnDis.addEventListener('click', async () => {
-    setBusy(btnDis, true);
-    try {
-      await api(`/accounts/${_rpcAccId}/rpc`, { method: 'PATCH', body: JSON.stringify({ rpc_json: JSON.stringify({enabled:false}) }) });
-      toast('RPC dinonaktifkan.');
-      await loadAccounts();
-      loadRpcPage();
-    } catch(err) { toast(err.message, true); }
-    finally { setBusy(btnDis, false); }
-  });
 }
 
 /* ───────── dialog ───────── */
@@ -2344,6 +2333,17 @@ async function loadRpcPage() {
   });
   updatePreview();
 
+  const btnDis = $('btn-disable-rpc');
+  if (btnDis) btnDis.addEventListener('click', async () => {
+    setBusy(btnDis, true);
+    try {
+      await api(`/accounts/${_rpcAccId}/rpc`, { method: 'PATCH', body: JSON.stringify({ rpc_json: JSON.stringify({enabled:false}) }) });
+      toast('RPC dinonaktifkan.');
+      await loadAccounts();
+      loadRpcPage();
+    } catch(err) { toast(err.message, true); }
+    finally { setBusy(btnDis, false); }
+  });
   $('btn-save-rpc').addEventListener('click', async () => {
     const btn = $('btn-save-rpc');
     const eh = parseInt($('rpc-elapsed-h').value)||0;
