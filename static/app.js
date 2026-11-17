@@ -2297,6 +2297,14 @@ async function loadRpcPage() {
       </div>
       <div style="display:flex;gap:8px;margin-top:16px"><button type="button" id="btn-save-rpc" class="btn btn-primary">Simpan dan aktifkan RPC</button><button type="button" id="btn-disable-rpc" class="btn btn-danger">Nonaktifkan</button></div>
       <p class="hint" style="margin-top:8px">Tombol RPC tidak terlihat di profil sendiri, hanya oleh orang lain.</p>
+      <div class="field" style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:8px;font-size:0.85em;line-height:1.6">
+        <b>ℹ️ Info Custom RPC</b><br>
+        • RPC hanya aktif saat akun Discord online<br>
+        • Application ID didapat dari <b>Discord Developer Portal</b><br>
+        • Gambar asset harus didaftarkan di Developer Portal terlebih dahulu<br>
+        • Tombol RPC maksimal 2, URL harus diawali https://<br>
+        • Status online/idle/dnd diatur di menu <b>Akun → Atur status</b>
+      </div>
     </div>
   `;
   // Pratinjau realtime
