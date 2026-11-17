@@ -1966,6 +1966,7 @@ $('log-q')?.addEventListener('input', e => { state.logSearch = e.target.value; r
 /* ───────── boot ───────── */
 async function boot() {
   loadContact();
+  if (!state.token) state.token = localStorage.getItem('token') || '';
   if (!state.token) {
     const vl = $('view-login');
     if (vl) vl.hidden = false;
