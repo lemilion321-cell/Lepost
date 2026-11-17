@@ -2307,15 +2307,7 @@ async function loadRpcPage() {
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px"><button type="button" id="btn-save-rpc" class="btn btn-primary">Simpan dan aktifkan RPC</button><button type="button" id="btn-disable-rpc" class="btn btn-danger">Nonaktifkan</button></div>
-      <p class="hint" style="margin-top:8px">Tombol RPC tidak terlihat di profil sendiri, hanya oleh orang lain.</p>
-      <div class="field" style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.04);border-radius:8px;font-size:0.85em;line-height:1.6">
-        <b>ℹ️ Info Custom RPC</b><br>
-        • RPC hanya aktif saat akun Discord online<br>
-        • Application ID didapat dari <b>Discord Developer Portal</b><br>
-        • Gambar asset harus didaftarkan di Developer Portal terlebih dahulu<br>
-        • Tombol RPC maksimal 2, URL harus diawali https://<br>
-        • Status online/idle/dnd diatur di menu <b>Akun → Atur status</b>
-      </div>
+      <p class="hint" style="margin-top:8px">Tombol RPC tidak terlihat di profilmu sendiri, hanya oleh orang lain. Gambar dari URL didaftarkan otomatis lewat Application ID. Status online, idle, atau jangan ganggu diatur di menu Akun Discord, tombol Atur status.</p>
     </div>
   `;
   // Pratinjau realtime
@@ -2338,6 +2330,14 @@ async function loadRpcPage() {
           ${state ? `<p style="font-size:0.85em;margin:0;color:#b0b4c1">${state}</p>` : ''}
         </div>
       </div>`;
+  }
+  const elapsedCb = $('rpc-elapsed');
+  const elapsedFields = document.getElementById('rpc-elapsed-fields');
+  if (elapsedCb && elapsedFields) {
+    elapsedFields.style.display = elapsedCb.checked ? 'flex' : 'none';
+    elapsedCb.addEventListener('change', () => {
+      elapsedFields.style.display = elapsedCb.checked ? 'flex' : 'none';
+    });
   }
   ['rpc-type','rpc-name','rpc-details','rpc-state','rpc-large-img'].forEach(id => {
     const el = $(id); if (el) el.addEventListener('input', updatePreview);
