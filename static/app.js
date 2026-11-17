@@ -1131,7 +1131,7 @@ function renderAccountList() {
           </div>
         </div>
       </div>
-      <div class="acc-card-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center">
+      <div class="acc-card-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr 32px;gap:6px;align-items:center">
         <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">${icon('zap')} Atur status</button>
         <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}">${icon('bell')} Webhook</button>
         <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M12 11l8-8m-3 0l2 2m-4 1l2 2"/></svg> Perbarui token</button>
