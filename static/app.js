@@ -2273,11 +2273,22 @@ async function loadRpcPage() {
       <div class="field"><label class="label">Tombol 1 URL</label><input id="rpc-btn1-url" class="input" placeholder="https://..." value="${esc(rpc.btn1_url||'')}"></div>
       <div class="field"><label class="label">Tombol 2 label</label><input id="rpc-btn2-label" class="input" placeholder="Contoh: Gabung Discord" value="${esc(rpc.btn2_label||'')}"></div>
       <div class="field"><label class="label">Tombol 2 URL</label><input id="rpc-btn2-url" class="input" placeholder="https://..." value="${esc(rpc.btn2_url||'')}"></div>
-      <div class="field"><label class="label"><input type="checkbox" id="rpc-elapsed" ${rpc.elapsed?'checked':''}> Tampilkan elapsed time (waktu berjalan)</label>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <input id="rpc-elapsed-h" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_h||0}" style="width:80px"> <span style="line-height:40px">jam</span>
-          <input id="rpc-elapsed-m" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_m||0}" style="width:80px"> <span style="line-height:40px">menit</span>
-          <input id="rpc-elapsed-s" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_s||0}" style="width:80px"> <span style="line-height:40px">detik</span>
+      <div class="field">
+        <label class="label" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="rpc-elapsed" ${rpc.elapsed?'checked':''}> Elapsed time (waktu berjalan)
+        </label>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="rpc-elapsed-h" class="input" type="number" min="0" placeholder="0" value="${rpc.elapsed_h||0}" style="flex:1"> <span style="min-width:40px">jam</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="rpc-elapsed-m" class="input" type="number" min="0" max="59" placeholder="0" value="${rpc.elapsed_m||0}" style="flex:1"> <span style="min-width:40px">menit</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input id="rpc-elapsed-s" class="input" type="number" min="0" max="59" placeholder="0" value="${rpc.elapsed_s||0}" style="flex:1"> <span style="min-width:40px">detik</span>
+          </div>
+          <button type="button" class="btn btn-sm" style="width:fit-content" onclick="$('rpc-elapsed-h').value=0;$('rpc-elapsed-m').value=0;$('rpc-elapsed-s').value=0">&#x21BA; Reset ke 0</button>
+          <p class="hint" style="margin:0">Isi waktu yang sudah berjalan saat ini, misalnya 2 jam. Tombol reset mengulang dari 00:00:00.</p>
         </div>
       </div>
       <div class="acc-form" style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.08);padding-top:16px">
