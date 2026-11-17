@@ -2250,7 +2250,7 @@ async function loadRpcPage() {
           <option value="5" ${rpc.type==5?'selected':''}>Competing</option>
         </select>
       </div>
-      <div class="field"><label class="label">Activity name</label><input id="rpc-name" class="input" placeholder="Contoh: Helga Market" value="${esc(rpc.name||'')}"></div>
+      <div class="field"><label class="label">Activity name</label><input id="rpc-name" class="input" placeholder="Contoh: LePost" value="${esc(rpc.name||'')}"></div>
       <div class="field"><label class="label">Application ID</label><input id="rpc-appid" class="input" placeholder="Angka dari Developer Portal" value="${esc(rpc.app_id||'')}"></div>
       <div class="field"><label class="label">Details</label><input id="rpc-details" class="input" placeholder="Baris pertama" value="${esc(rpc.details||'')}"></div>
       <div class="field"><label class="label">State</label><input id="rpc-state" class="input" placeholder="Baris kedua" value="${esc(rpc.state||'')}"></div>
@@ -2288,6 +2288,32 @@ async function loadRpcPage() {
       <p class="hint" style="margin-top:8px">Tombol RPC tidak terlihat di profil sendiri, hanya oleh orang lain.</p>
     </div>
   `;
+  // Pratinjau realtime
+  function updatePreview() {
+    const type = parseInt($('rpc-type').value)||0;
+    const name = $('rpc-name').value.trim()||'Nama aktivitas';
+    const details = $('rpc-details').value.trim();
+    const state = $('rpc-state').value.trim();
+    const img = $('rpc-large-img').value.trim();
+    const typeLabel = type==1?'Streaming':type==2?'Listening to':type==3?'Watching':type==5?'Competing in':'Sedang bermain';
+    const preview = document.getElementById('rpc-preview');
+    if (!preview) return;
+    preview.innerHTML = `
+      <div style="background:#1e2029;border-radius:8px;padding:12px;display:flex;gap:12px;align-items:center">
+        ${img ? `<img src="${img}" style="width:60px;height:60px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'">` : '<div style="width:60px;height:60px;border-radius:8px;background:#2e3038;flex-shrink:0"></div>'}
+        <div>
+          <p style="font-size:0.8em;color:#b0b4c1;margin:0">${typeLabel}</p>
+          <p style="margin:2px 0;font-weight:600">${name}</p>
+          ${details ? `<p style="font-size:0.85em;margin:0;color:#b0b4c1">${details}</p>` : ''}
+          ${state ? `<p style="font-size:0.85em;margin:0;color:#b0b4c1">${state}</p>` : ''}
+        </div>
+      </div>`;
+  }
+  ['rpc-type','rpc-name','rpc-details','rpc-state','rpc-large-img'].forEach(id => {
+    const el = $(id); if (el) el.addEventListener('input', updatePreview);
+  });
+  updatePreview();
+
   $('btn-save-rpc').addEventListener('click', async () => {
     const btn = $('btn-save-rpc');
     const eh = parseInt($('rpc-elapsed-h').value)||0;
