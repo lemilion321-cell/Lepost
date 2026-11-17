@@ -12,6 +12,8 @@ from config import DISCORD_API
 log = logging.getLogger("autopost.discord")
 
 MAX_RETRY_429 = 3
+RETRY_INLINE_MAX = 60.0     # FIX-429
+RETRY_AFTER_CAP = 21600.0   # FIX-429: slowmode maks 6 jam
 
 _HEADERS = {
     "Content-Type": "application/json",
@@ -67,8 +69,8 @@ class Discord:
                             wait = float(r.headers.get("Retry-After", 5))
                         except (TypeError, ValueError):
                             pass
-                    wait = min(max(wait, 1.0), 300.0)
-                    if _retry < MAX_RETRY_429:
+                    wait = min(max(wait, 1.0), RETRY_AFTER_CAP)
+                    if wait <= RETRY_INLINE_MAX and _retry < MAX_RETRY_429:
                         await asyncio.sleep(wait + 0.5)
                         return await self._req(method, path, _retry + 1, **kw)
                     # Habis retry — kembalikan error dengan retry_after supaya worker bisa sleep

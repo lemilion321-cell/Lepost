@@ -30,6 +30,20 @@ log = logging.getLogger("autopost.worker")
 MIN_DELAY_SEC = 5.0
 
 
+def _initial_wait(q_id: int, delay_sec: float) -> float:
+    # FIX-429: sisa cooldown sejak last_run
+    db = SessionLocal()
+    try:
+        q = db.get(Query, q_id)
+        if not q or not q.last_run:
+            return 0.0
+        return max(0.0, delay_sec - (utcnow() - q.last_run).total_seconds())
+    except Exception:
+        return 0.0
+    finally:
+        db.close()
+
+
 def _log(qid, level: str, msg: str):
     db = SessionLocal()
     try:
@@ -303,8 +317,9 @@ async def run_query_loop(q_id: int):
                 # Set validated=True SETELAH validasi selesai tanpa exception
                 validated = True
 
-            if not first:
-                await asyncio.sleep(cfg["delay_sec"])
+            wait_sec = _initial_wait(q_id, cfg["delay_sec"]) if first else cfg["delay_sec"]
+            if wait_sec > 0:
+                await asyncio.sleep(wait_sec)
                 cfg = _load_cfg(q_id)  # baca ulang: bisa aja diedit/distop pas nunggu
                 if cfg is None:
                     return
