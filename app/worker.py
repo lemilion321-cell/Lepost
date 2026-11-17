@@ -3,14 +3,15 @@ import json
 import logging
 import random
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import aiohttp
+from sqlalchemy import or_
 
 from cryptography.fernet import Fernet
 
 from app.discord_client import Discord
-from app.models import Account, Query, Log, User, UserLicense, SessionLocal, utcnow
+from app.models import Account, Query, Log, User, UserLicense, SessionLocal, utcnow, ChannelState
 from config import TOKEN_ENC_KEY
 
 _fernet = Fernet(TOKEN_ENC_KEY)
@@ -28,6 +29,7 @@ def _dec_token(enc: str) -> str:
 log = logging.getLogger("autopost.worker")
 
 MIN_DELAY_SEC = 5.0
+RETRY_SLEEP_MAX = 900.0  # detik maksimal nunggu di tempat waktu kena slowmode
 
 
 def _initial_wait(q_id: int, delay_sec: float) -> float:
@@ -42,6 +44,71 @@ def _initial_wait(q_id: int, delay_sec: float) -> float:
         return 0.0
     finally:
         db.close()
+
+
+def _claim_channel(ch_id, gap_sec: float) -> bool:
+    """Ambil hak kirim ke channel ini. Atomik (lewat DB), jadi aman walau ada
+    lebih dari satu query/proses yang mau kirim ke channel yang sama.
+    True = boleh kirim sekarang, False = channel baru saja dapat post."""
+    cid = str(ch_id)
+    db = SessionLocal()
+    try:
+        now = utcnow()
+        until = now + timedelta(seconds=max(float(gap_sec), MIN_DELAY_SEC))
+        row = db.get(ChannelState, cid)
+        if row is None:
+            db.add(ChannelState(channel_id=cid, next_allowed_at=until))
+            try:
+                db.commit()
+                return True
+            except Exception:
+                db.rollback()
+                return False  # proses lain barusan bikin baris yang sama
+        res = (
+            db.query(ChannelState)
+            .filter(
+                ChannelState.channel_id == cid,
+                or_(ChannelState.next_allowed_at.is_(None), ChannelState.next_allowed_at <= now),
+            )
+            .update({ChannelState.next_allowed_at: until}, synchronize_session=False)
+        )
+        db.commit()
+        return res == 1
+    except Exception:
+        db.rollback()
+        log.warning("Gagal claim channel %s, kirim tetap dilanjutkan", cid, exc_info=True)
+        return True
+    finally:
+        db.close()
+
+
+def _set_channel_cooldown(ch_id, seconds: float):
+    """Tandai channel ini tidak boleh dikirimi selama N detik (mis. abis kena 429)."""
+    cid = str(ch_id)
+    db = SessionLocal()
+    try:
+        until = utcnow() + timedelta(seconds=max(float(seconds), 1.0))
+        row = db.get(ChannelState, cid)
+        if row is None:
+            db.add(ChannelState(channel_id=cid, next_allowed_at=until))
+        else:
+            row.next_allowed_at = until
+        db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
+async def _channel_slowmode(dc: Discord, ch_id) -> float:
+    """Slowmode asli channel dari Discord (detik). 0 kalau gagal dibaca."""
+    res = await dc.get_channel(ch_id)
+    if not isinstance(res, dict) or "error" in res:
+        return 0.0
+    try:
+        return float(res.get("rate_limit_per_user") or 0)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def _log(qid, level: str, msg: str):
@@ -205,7 +272,25 @@ async def _post_once(cfg: dict, turn: int) -> bool:
     log.info("Query %s: giliran %s (@%s) -> #%s", qid, acc["label"], acc["user"], chan)
 
     async with Discord(acc["token"], acc["proxy"]) as dc:
+        slow = await _channel_slowmode(dc, cfg["channel_id"])
+        gap = max(slow + 2.0, MIN_DELAY_SEC)
+        # Anti-dobel: 1 channel cuma boleh dapat 1 post per window slowmode,
+        # walau ada query/akun/proses lain yang mau kirim di saat yang sama.
+        if not _claim_channel(cfg["channel_id"], gap):
+            _log(qid, "INFO", f"#{chan} baru saja dapat post (slowmode {int(slow)}s). Giliran ini dilewati biar ga kena 429.")
+            return False
+
         res = await dc.send(cfg["channel_id"], txt, cfg["embed"])
+
+        # Kena slowmode: tunggu sesuai retry_after lalu kirim ulang sekali,
+        # daripada slot posting-nya kebuang percuma (post baru 6 jam lagi).
+        if isinstance(res, dict) and res.get("error") == 429:
+            wait = float(res.get("retry_after") or 5) + 1.0
+            _set_channel_cooldown(cfg["channel_id"], wait)
+            if wait <= RETRY_SLEEP_MAX:
+                _log(qid, "INFO", f"[{acc['label']}] Kena slowmode di #{chan}, nunggu {wait:.0f}s lalu kirim ulang.")
+                await asyncio.sleep(wait)
+                res = await dc.send(cfg["channel_id"], txt, cfg["embed"])
 
     if "error" in res:
         code = res.get("error")
@@ -214,9 +299,9 @@ async def _post_once(cfg: dict, turn: int) -> bool:
             _log(qid, "ERROR", f"[{acc['label']}] Token tidak valid (401). Ganti token akun lewat menu Akun → Edit Token.")
             return _INVALID_TOKEN
         elif code == 429:
-            retry_after = res.get("retry_after", 5)
-            _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Worker nunggu {retry_after:.0f}s sebelum lanjut.")
-            await asyncio.sleep(float(retry_after) + 1.0)
+            retry_after = float(res.get("retry_after") or 5)
+            _set_channel_cooldown(cfg["channel_id"], retry_after)
+            _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Channel #{chan} di-cooldown {retry_after:.0f}s.")
         elif code == "NETWORK":
             _log(qid, "ERROR", f"[{acc['label']}] Gagal kirim (network error): {detail}")
         else:
