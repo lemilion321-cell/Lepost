@@ -385,6 +385,7 @@
       </div>
       <div class="field"><label class="label" for="post-content">Pesan</label><textarea id="post-content" class="textarea" rows="3" placeholder="Isi pesan..."></textarea></div>
       <div class="grid-2"><div class="field"><label class="label" for="post-delay">Delay (menit)</label><input id="post-delay" class="input" type="number" min="1" value="5" inputmode="numeric"></div><div class="field"><label class="label" for="post-delay-random">Random ± (menit)</label><input id="post-delay-random" class="input" type="number" min="0" max="60" value="0" inputmode="numeric" placeholder="0 = nonaktif"></div></div>
+      <div class="field"><label class="label" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="post-typing-sim"> Typing simulation <span class="hint" style="margin:0;font-size:0.8em">(tampilkan "sedang mengetik..." sebelum kirim)</span></label></div>
       <div class="field-box field"><label class="label" for="post-webhook-url">Webhook (opsional)</label><input id="post-webhook-url" class="input" type="url" placeholder="https://discord.com/api/webhooks/..." autocomplete="off"><p class="hint">Disimpan di perangkat ini untuk pengisian berikutnya.</p></div>
       <div class="dlg-actions"><button type="submit" class="btn btn-primary btn-block">Simpan Post</button><button type="button" class="btn btn-block" data-act="close" data-dialog="dlg-post">Batal</button></div>
     </form>
