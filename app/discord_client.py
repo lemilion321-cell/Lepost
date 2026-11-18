@@ -111,7 +111,11 @@ class Discord:
         """Detail 1 channel (buat baca slowmode asli: rate_limit_per_user)."""
         return await self._req("GET", f"/channels/{ch}")
 
-    async def send(self, ch: str, content: str, embed: Optional[dict] = None, react: str = ""):
+    async def trigger_typing(self, ch: str):
+        """Kirim sinyal 'sedang mengetik...' ke channel. Berlaku 10 detik di Discord."""
+        await self._req("POST", f"/channels/{ch}/typing")
+
+    async def send(self, ch: str, content: str, embed: Optional[dict] = None, react: str = "", typing_sim: bool = False):
         payload: dict = {}
         if content:
             payload["content"] = content
@@ -128,6 +132,19 @@ class Discord:
 
         if not payload:
             return {"error": "EMPTY", "message": "Pesan kosong (isi teks atau embed)", "body": ""}
+
+        # Typing simulation: kirim sinyal mengetik, lalu delay sesuai panjang teks
+        if typing_sim and content:
+            # ~50 karakter/detik, min 1.5s, max 9.5s (Discord typing berlaku 10 detik)
+            typing_delay = min(max(len(content) / 50.0, 1.5), 9.5)
+            # Kalau teks panjang (>500 char), kirim ulang sinyal tiap ~9 detik
+            remaining = typing_delay
+            await self._req("POST", f"/channels/{ch}/typing")
+            while remaining > 9.5:
+                await asyncio.sleep(9.0)
+                remaining -= 9.0
+                await self._req("POST", f"/channels/{ch}/typing")
+            await asyncio.sleep(remaining)
 
         res = await self._req("POST", f"/channels/{ch}/messages", json=payload)
 

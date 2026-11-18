@@ -198,6 +198,7 @@ def _q_out(q: Query) -> dict:
         "embed": embed,
         "webhook_url": q.webhook_url or "",
         "status": q.status, "delay_min": q.delay_min, "delay_random_min": q.delay_random_min or 0,
+        "typing_sim": bool(getattr(q, "typing_sim", False)),
         "last_run": _iso(q.last_run),
     }
 
@@ -332,6 +333,7 @@ class QueryIn(BaseModel):
     webhook_url: str = ""
     delay_min: int = Field(default=5, ge=1, le=60 * 24 * 7)
     delay_random_min: int = Field(default=0, ge=0, le=60)
+    typing_sim: bool = False
 
 
 class QueryPatch(BaseModel):
@@ -345,6 +347,7 @@ class QueryPatch(BaseModel):
     webhook_url: Optional[str] = None
     delay_min: Optional[int] = Field(default=None, ge=1, le=60 * 24 * 7)
     delay_random_min: Optional[int] = Field(default=None, ge=0, le=60)
+    typing_sim: Optional[bool] = None
 
 
 class KeyIn(BaseModel):
@@ -764,7 +767,8 @@ def add_query(data: QueryIn, user: User = Depends(current_user), db: Session = D
         bypass_data=json.dumps([_dump(t) for t in data.bypass_data]),
         guild_id=data.guild_id, channel_id=data.channel_id, channel_name=data.channel_name,
         content=data.content, embed_json=json.dumps(data.embed),
-        webhook_url=data.webhook_url, delay_min=data.delay_min, delay_random_min=data.delay_random_min, status="stopped",
+        webhook_url=data.webhook_url, delay_min=data.delay_min, delay_random_min=data.delay_random_min,
+        typing_sim=data.typing_sim, status="stopped",
     )
     db.add(q)
     db.commit()
@@ -788,7 +792,7 @@ def update_query(qid: int, data: QueryPatch, user: User = Depends(current_user),
         q.webhook_url = d["webhook_url"] or ""
     if "embed" in d:
         q.embed_json = json.dumps(d["embed"] or {})
-    for f in ("status", "content", "guild_id", "channel_id", "channel_name", "delay_min", "delay_random_min"):
+    for f in ("status", "content", "guild_id", "channel_id", "channel_name", "delay_min", "delay_random_min", "typing_sim"):
         if f in d and d[f] is not None:
             setattr(q, f, d[f])
     db.commit()

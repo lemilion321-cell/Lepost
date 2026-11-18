@@ -147,6 +147,7 @@ def _load_cfg(q_id: int):
             "content": q.content or "", "embed": embed if isinstance(embed, dict) else {},
             "webhook": q.webhook_url or "", "channel_id": q.channel_id,
             "channel_name": (q.channel_name or "").lstrip("#"), "delay_sec": delay,
+            "typing_sim": bool(getattr(q, "typing_sim", False)),
         }
     finally:
         db.close()
@@ -280,7 +281,7 @@ async def _post_once(cfg: dict, turn: int) -> bool:
             _log(qid, "INFO", f"#{chan} baru saja dapat post (slowmode {int(slow)}s). Giliran ini dilewati biar ga kena 429.")
             return False
 
-        res = await dc.send(cfg["channel_id"], txt, cfg["embed"])
+        res = await dc.send(cfg["channel_id"], txt, cfg["embed"], typing_sim=cfg.get("typing_sim", False))
 
         # Kena slowmode: tunggu sesuai retry_after lalu kirim ulang sekali,
         # daripada slot posting-nya kebuang percuma (post baru 6 jam lagi).

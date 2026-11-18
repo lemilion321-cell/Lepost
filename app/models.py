@@ -88,6 +88,7 @@ class Query(Base):
     delay_random_min: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(16), default="stopped")
     last_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    typing_sim: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ChannelState(Base):
@@ -124,9 +125,11 @@ def _migrate():
     insp = inspect(engine)
     if "queries" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("queries")}
-        if "guild_id" not in cols:
-            with engine.begin() as con:
+        with engine.begin() as con:
+            if "guild_id" not in cols:
                 con.execute(text("ALTER TABLE queries ADD COLUMN guild_id VARCHAR(32) NOT NULL DEFAULT ''"))
+            if "typing_sim" not in cols:
+                con.execute(text("ALTER TABLE queries ADD COLUMN typing_sim BOOLEAN NOT NULL DEFAULT FALSE"))
 
     if "users" in insp.get_table_names():
         cols = {c["name"] for c in insp.get_columns("users")}
