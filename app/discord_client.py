@@ -135,16 +135,10 @@ class Discord:
 
         # Typing simulation: kirim sinyal mengetik, lalu delay sesuai panjang teks
         if typing_sim and content:
-            # ~50 karakter/detik, min 1.5s, max 9.5s (Discord typing berlaku 10 detik)
-            typing_delay = min(max(len(content) / 50.0, 1.5), 9.5)
-            # Kalau teks panjang (>500 char), kirim ulang sinyal tiap ~9 detik
-            remaining = typing_delay
+            # ~50 karakter/detik, min 1.5s, max 10s
+            typing_delay = min(max(len(content) / 50.0, 1.5), 10.0)
             await self._req("POST", f"/channels/{ch}/typing")
-            while remaining > 9.5:
-                await asyncio.sleep(9.0)
-                remaining -= 9.0
-                await self._req("POST", f"/channels/{ch}/typing")
-            await asyncio.sleep(remaining)
+            await asyncio.sleep(typing_delay)
 
         res = await self._req("POST", f"/channels/{ch}/messages", json=payload)
 
