@@ -46,12 +46,14 @@ def _initial_wait(q_id: int, delay_sec: float) -> float:
         db.close()
 
 
-def _channel_db_cooldown_remaining(ch_id) -> float:
-    """Sisa cooldown channel di DB (detik). 0 = sudah boleh kirim."""
-    cid = str(ch_id)
+def _account_channel_cooldown_remaining(acc_id: int, ch_id: str) -> float:
+    """Sisa cooldown akun ini di channel ini (detik). 0 = sudah boleh kirim."""
     db = SessionLocal()
     try:
-        row = db.get(ChannelState, cid)
+        row = db.query(ChannelState).filter_by(
+            account_id=acc_id,
+            channel_id=str(ch_id)
+        ).first()
         if row is None or row.next_allowed_at is None:
             return 0.0
         remaining = (row.next_allowed_at - utcnow()).total_seconds()
@@ -62,51 +64,65 @@ def _channel_db_cooldown_remaining(ch_id) -> float:
         db.close()
 
 
-def _claim_channel(ch_id, gap_sec: float) -> bool:
-    """Ambil hak kirim ke channel ini. Atomik (lewat DB), jadi aman walau ada
-    lebih dari satu query/proses yang mau kirim ke channel yang sama.
-    True = boleh kirim sekarang, False = channel baru saja dapat post."""
-    cid = str(ch_id)
+def _claim_account_channel(acc_id: int, ch_id: str, gap_sec: float) -> bool:
+    """Cek apakah akun ini boleh kirim ke channel ini sekarang.
+    True = boleh kirim, False = akun ini baru posting ke channel ini (cooldown belum habis)."""
     db = SessionLocal()
     try:
         now = utcnow()
         until = now + timedelta(seconds=max(float(gap_sec), MIN_DELAY_SEC))
-        row = db.get(ChannelState, cid)
+        row = db.query(ChannelState).filter_by(
+            account_id=acc_id,
+            channel_id=str(ch_id)
+        ).first()
+        
         if row is None:
-            db.add(ChannelState(channel_id=cid, next_allowed_at=until))
+            # Belum pernah posting, buat record baru
+            db.add(ChannelState(
+                account_id=acc_id,
+                channel_id=str(ch_id),
+                next_allowed_at=until
+            ))
             try:
                 db.commit()
                 return True
             except Exception:
                 db.rollback()
-                return False  # proses lain barusan bikin baris yang sama
-        res = (
-            db.query(ChannelState)
-            .filter(
-                ChannelState.channel_id == cid,
-                or_(ChannelState.next_allowed_at.is_(None), ChannelState.next_allowed_at <= now),
-            )
-            .update({ChannelState.next_allowed_at: until}, synchronize_session=False)
-        )
-        db.commit()
-        return res == 1
+                return False
+        
+        # Cek apakah cooldown sudah habis
+        if row.next_allowed_at is None or row.next_allowed_at <= now:
+            # Boleh posting, update cooldown baru
+            row.next_allowed_at = until
+            db.commit()
+            return True
+        else:
+            # Masih cooldown
+            return False
     except Exception:
         db.rollback()
-        log.warning("Gagal claim channel %s, kirim tetap dilanjutkan", cid, exc_info=True)
+        log.warning("Gagal claim account %s channel %s, kirim tetap dilanjutkan", acc_id, ch_id, exc_info=True)
         return True
     finally:
         db.close()
 
 
-def _set_channel_cooldown(ch_id, seconds: float):
-    """Tandai channel ini tidak boleh dikirimi selama N detik (mis. abis kena 429)."""
-    cid = str(ch_id)
+def _set_account_channel_cooldown(acc_id: int, ch_id: str, seconds: float):
+    """Tandai akun ini tidak boleh kirim ke channel ini selama N detik (mis. abis kena 429)."""
     db = SessionLocal()
     try:
         until = utcnow() + timedelta(seconds=max(float(seconds), 1.0))
-        row = db.get(ChannelState, cid)
+        row = db.query(ChannelState).filter_by(
+            account_id=acc_id,
+            channel_id=str(ch_id)
+        ).first()
+        
         if row is None:
-            db.add(ChannelState(channel_id=cid, next_allowed_at=until))
+            db.add(ChannelState(
+                account_id=acc_id,
+                channel_id=str(ch_id),
+                next_allowed_at=until
+            ))
         else:
             row.next_allowed_at = until
         db.commit()
@@ -285,6 +301,7 @@ async def _post_once(cfg: dict, turn: int) -> bool:
         _log(qid, "ERROR", f"Akun ID {target.get('account_id')} ga ketemu (kehapus?). Giliran di-skip.")
         return False
 
+    acc_id = target.get("account_id")
     chan = cfg["channel_name"] or cfg["channel_id"]
     log.info("Query %s: giliran %s (@%s) -> #%s", qid, acc["label"], acc["user"], chan)
 
@@ -292,33 +309,30 @@ async def _post_once(cfg: dict, turn: int) -> bool:
         slow = await _channel_slowmode(dc, cfg["channel_id"])
         gap = max(slow + 2.0, MIN_DELAY_SEC)
 
-        # Kalau DB bilang masih cooldown, cek Discord langsung —
-        # mungkin slowmode-nya sudah selesai duluan (mis. ganti akun / server reset).
-        db_remaining = _channel_db_cooldown_remaining(cfg["channel_id"])
+        # Cek apakah akun ini masih cooldown di channel ini
+        db_remaining = _account_channel_cooldown_remaining(acc_id, cfg["channel_id"])
         if db_remaining > 0 and slow == 0.0:
-            # Discord bilang ga ada slowmode → reset cooldown DB, boleh kirim sekarang
-            _set_channel_cooldown(cfg["channel_id"], 0)
-            log.info("Query %s: cooldown DB direset (Discord sudah clear), langsung kirim ke #%s", qid, chan)
+            # Discord bilang ga ada slowmode → reset cooldown DB akun ini
+            _set_account_channel_cooldown(acc_id, cfg["channel_id"], 0)
+            log.info("Query %s: cooldown akun %s direset (Discord sudah clear slowmode)", qid, acc["label"])
         elif db_remaining > 0 and db_remaining > slow + 2.0:
-            # Sisa cooldown DB lebih panjang dari slowmode Discord asli → pakai slowmode Discord
-            _set_channel_cooldown(cfg["channel_id"], slow + 2.0)
-            log.info("Query %s: cooldown DB dipercepat sesuai slowmode Discord (%ds) untuk #%s", qid, int(slow), chan)
+            # Sisa cooldown DB lebih panjang dari slowmode Discord asli
+            _set_account_channel_cooldown(acc_id, cfg["channel_id"], slow + 2.0)
+            log.info("Query %s: cooldown akun %s dipercepat sesuai slowmode Discord (%ds)", qid, acc["label"], int(slow))
 
-        # Anti-dobel: 1 channel cuma boleh dapat 1 post per window slowmode,
-        # walau ada query/akun/proses lain yang mau kirim di saat yang sama.
-        if not _claim_channel(cfg["channel_id"], gap):
-            _log(qid, "INFO", f"#{chan} baru saja dapat post (slowmode {int(slow)}s). Giliran ini dilewati biar ga kena 429.")
+        # Anti-dobel per AKUN: cek apakah akun ini boleh posting ke channel ini
+        if not _claim_account_channel(acc_id, cfg["channel_id"], gap):
+            _log(qid, "INFO", f"[{acc['label']}] Akun ini baru posting ke #{chan} (slowmode {int(slow)}s). Giliran dilewati biar ga kena 429.")
             return False
 
         log.info("Query %s: mencoba kirim ke #%s (slow=%ss)", qid, chan, int(slow))
         res = await dc.send(cfg["channel_id"], txt, cfg["embed"], typing_sim=cfg.get("typing_sim", False))
         log.info("Query %s: hasil kirim -> %s", qid, res.get("error", "OK") if isinstance(res, dict) else res)
 
-        # Kena slowmode: tunggu sesuai retry_after lalu kirim ulang sekali,
-        # daripada slot posting-nya kebuang percuma (post baru 6 jam lagi).
+        # Kena slowmode: tunggu sesuai retry_after lalu kirim ulang sekali
         if isinstance(res, dict) and res.get("error") == 429:
             wait = float(res.get("retry_after") or 5) + 1.0
-            _set_channel_cooldown(cfg["channel_id"], wait)
+            _set_account_channel_cooldown(acc_id, cfg["channel_id"], wait)
             if wait <= RETRY_SLEEP_MAX:
                 _log(qid, "INFO", f"[{acc['label']}] Kena slowmode di #{chan}, nunggu {wait:.0f}s lalu kirim ulang.")
                 await asyncio.sleep(wait)
@@ -332,13 +346,12 @@ async def _post_once(cfg: dict, turn: int) -> bool:
             return _INVALID_TOKEN
         elif code == 429:
             retry_after = float(res.get("retry_after") or 5)
-            _set_channel_cooldown(cfg["channel_id"], retry_after)
-            _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Channel #{chan} di-cooldown {retry_after:.0f}s.")
+            _set_account_channel_cooldown(acc_id, cfg["channel_id"], retry_after)
+            _log(qid, "ERROR", f"[{acc['label']}] Rate limit (429): {detail}. Akun ini di-cooldown {retry_after:.0f}s.")
         elif code == "NETWORK":
             _log(qid, "ERROR", f"[{acc['label']}] Gagal kirim (network error): {detail}")
         else:
             _log(qid, "ERROR", f"[{acc['label']}] Gagal ({code}): {detail}"[:1000])
-        # return True: attempt sudah dilakukan ke Discord (meski gagal), giliran tetap maju
         return True
 
     _log(qid, "SUCCESS", f"[{acc['label']}] Sukses ke #{chan}")
@@ -457,14 +470,11 @@ async def run_query_loop(q_id: int):
 
             wait_sec = _initial_wait(q_id, cfg["delay_sec"]) if first else cfg["delay_sec"]
             if wait_sec > 0:
-                # Tidur dalam potongan kecil supaya bisa deteksi reset cooldown / stop
+                # Tidur dalam potongan kecil supaya bisa deteksi stop
                 elapsed = 0.0
                 TICK = 10.0
                 while elapsed < wait_sec:
-                    # Kalau cooldown DB di-reset manual, langsung skip sisa tunggu
-                    if _channel_db_cooldown_remaining(cfg["channel_id"]) == 0.0 and elapsed > 0:
-                        log.info("Query %s: cooldown direset manual, skip sisa tunggu %.0fs", q_id, wait_sec - elapsed)
-                        break
+                    # TODO: deteksi reset cooldown manual per akun (sekarang tracking per akun+channel)
                     cfg = _load_cfg(q_id)
                     if cfg is None:
                         return

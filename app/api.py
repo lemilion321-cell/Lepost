@@ -810,15 +810,28 @@ def update_query(qid: int, data: QueryPatch, user: User = Depends(current_user),
 
 @router.post("/queries/{qid}/reset-cooldown")
 def reset_query_cooldown(qid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Reset cooldown channel query ini supaya bisa langsung kirim."""
+    """Reset cooldown semua akun di query ini supaya bisa langsung kirim."""
     from app.models import ChannelState
     q = _get_query(db, qid, user)
     ch_id = q.channel_id
-    row = db.query(ChannelState).filter(ChannelState.channel_id == ch_id).first()
-    if row:
-        row.next_allowed_at = None
-        db.commit()
-    return {"ok": True, "channel_id": ch_id}
+    # Reset cooldown semua akun yang ada di query ini
+    try:
+        acc_ids = {int(t["account_id"]) for t in json.loads(q.bypass_data or "[]")}
+    except (ValueError, KeyError, TypeError):
+        acc_ids = set()
+    
+    reset_count = 0
+    for acc_id in acc_ids:
+        row = db.query(ChannelState).filter_by(
+            account_id=acc_id,
+            channel_id=ch_id
+        ).first()
+        if row:
+            row.next_allowed_at = None
+            reset_count += 1
+    
+    db.commit()
+    return {"ok": True, "channel_id": ch_id, "accounts_reset": reset_count}
 
 
 @router.delete("/queries/{qid}")

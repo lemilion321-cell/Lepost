@@ -3,7 +3,7 @@ from typing import Optional
 
 from sqlalchemy import (
     String, Integer, Boolean, DateTime, ForeignKey, Text,
-    create_engine, event, inspect, text,
+    create_engine, event, inspect, text, UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Mapped, mapped_column
 
@@ -92,11 +92,19 @@ class Query(Base):
 
 
 class ChannelState(Base):
-    """Penjaga anti-dobel per channel: kapan channel ini boleh dikirimi pesan lagi.
+    """Penjaga anti-dobel per akun + channel: kapan akun ini boleh kirim ke channel ini lagi.
     Disimpan di DB (bukan di memori) supaya tetap berlaku walau ada lebih dari satu proses."""
     __tablename__ = "channel_state"
-    channel_id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    account_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    channel_id: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     next_allowed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    __table_args__ = (
+        # Unique constraint: 1 akun cuma bisa punya 1 cooldown per channel
+        # (bukan unique per channel, tapi unique per akun+channel!)
+        UniqueConstraint('account_id', 'channel_id', name='uq_account_channel'),
+    )
 
 
 class Log(Base):
