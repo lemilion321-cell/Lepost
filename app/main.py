@@ -135,23 +135,49 @@ async def lifespan(app: FastAPI):
         # Migrasi ChannelState: per-channel → per-account+channel
         try:
             # Cek apakah tabel lama masih pakai struktur lama (channel_id primary key)
-            result = _conn.execute(text("PRAGMA table_info(channel_state)")).fetchall()
-            cols = {row[1]: row for row in result}
+            # PostgreSQL pakai information_schema, SQLite pakai PRAGMA
+            if 'postgresql' in str(engine.url):
+                # PostgreSQL
+                result = _conn.execute(text("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'channel_state'
+                """)).fetchall()
+                cols = {row[0] for row in result}
+            else:
+                # SQLite
+                result = _conn.execute(text("PRAGMA table_info(channel_state)")).fetchall()
+                cols = {row[1] for row in result}
             
             # Kalau belum ada kolom account_id atau id, berarti masih struktur lama
             if 'account_id' not in cols or 'id' not in cols:
                 log.info("🔄 Migrasi ChannelState: per-channel → per-account+channel")
                 _conn.execute(text("DROP TABLE IF EXISTS channel_state_old"))
                 _conn.execute(text("ALTER TABLE channel_state RENAME TO channel_state_old"))
-                _conn.execute(text("""
-                    CREATE TABLE channel_state (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        account_id INTEGER NOT NULL,
-                        channel_id VARCHAR(32) NOT NULL,
-                        next_allowed_at DATETIME,
-                        UNIQUE(account_id, channel_id)
-                    )
-                """))
+                
+                if 'postgresql' in str(engine.url):
+                    # PostgreSQL
+                    _conn.execute(text("""
+                        CREATE TABLE channel_state (
+                            id SERIAL PRIMARY KEY,
+                            account_id INTEGER NOT NULL,
+                            channel_id VARCHAR(32) NOT NULL,
+                            next_allowed_at TIMESTAMP,
+                            UNIQUE(account_id, channel_id)
+                        )
+                    """))
+                else:
+                    # SQLite
+                    _conn.execute(text("""
+                        CREATE TABLE channel_state (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            account_id INTEGER NOT NULL,
+                            channel_id VARCHAR(32) NOT NULL,
+                            next_allowed_at DATETIME,
+                            UNIQUE(account_id, channel_id)
+                        )
+                    """))
+                
                 _conn.execute(text("CREATE INDEX ix_channel_state_account_id ON channel_state (account_id)"))
                 _conn.execute(text("CREATE INDEX ix_channel_state_channel_id ON channel_state (channel_id)"))
                 _conn.execute(text("DROP TABLE channel_state_old"))
