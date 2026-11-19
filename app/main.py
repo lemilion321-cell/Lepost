@@ -9,9 +9,9 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import router, _ensure_extra_tables, UserBroadcast
 from app.auth import hash_pw
-from app.models import init_db, SessionLocal, User, Query, Log, UserLicense, utcnow
+from app.models import init_db, SessionLocal, User, Query, Log, UserLicense, utcnow, Account
 from app.worker import run_query_loop, start_all_gateways
-from config import BASE_DIR, ADMIN_PASSWORD
+from config import BASE_DIR, ADMIN_PASSWORD, TOKEN_ENC_KEY
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("autopost")
