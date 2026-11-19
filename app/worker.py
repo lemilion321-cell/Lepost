@@ -310,7 +310,9 @@ async def _post_once(cfg: dict, turn: int) -> bool:
             _log(qid, "INFO", f"#{chan} baru saja dapat post (slowmode {int(slow)}s). Giliran ini dilewati biar ga kena 429.")
             return False
 
+        log.info("Query %s: mencoba kirim ke #%s (slow=%ss)", qid, chan, int(slow))
         res = await dc.send(cfg["channel_id"], txt, cfg["embed"], typing_sim=cfg.get("typing_sim", False))
+        log.info("Query %s: hasil kirim -> %s", qid, res.get("error", "OK") if isinstance(res, dict) else res)
 
         # Kena slowmode: tunggu sesuai retry_after lalu kirim ulang sekali,
         # daripada slot posting-nya kebuang percuma (post baru 6 jam lagi).
