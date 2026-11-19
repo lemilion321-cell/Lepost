@@ -211,6 +211,31 @@ async def lifespan(app: FastAPI):
         log.info("Backfill avatar selesai untuk %d akun", len(_accs))
     except Exception as _e:
         log.warning("Backfill avatar error: %s", _e)
+    
+    # Auto re-encrypt plaintext tokens
+    try:
+        from cryptography.fernet import Fernet
+        _fernet = Fernet(TOKEN_ENC_KEY)
+        _db = SessionLocal()
+        _accs = _db.query(Account).all()
+        _plaintext_count = 0
+        for _a in _accs:
+            try:
+                # Coba decrypt, kalau gagal berarti plaintext
+                _fernet.decrypt(_a.token_enc.encode()).decode()
+            except Exception:
+                # Token plaintext, re-encrypt
+                _a.token_enc = _fernet.encrypt(_a.token_enc.encode()).decode()
+                _plaintext_count += 1
+        if _plaintext_count > 0:
+            _db.commit()
+            log.info("🔐 Auto re-encrypted %d plaintext tokens", _plaintext_count)
+        else:
+            log.info("✅ Semua token sudah encrypted")
+        _db.close()
+    except Exception as _e:
+        log.warning("Auto re-encrypt tokens error: %s", _e)
+    
     await start_all_gateways()
     try:
         yield
