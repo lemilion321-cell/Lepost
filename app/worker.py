@@ -434,8 +434,23 @@ async def run_query_loop(q_id: int):
 
             wait_sec = _initial_wait(q_id, cfg["delay_sec"]) if first else cfg["delay_sec"]
             if wait_sec > 0:
-                await asyncio.sleep(wait_sec)
-                cfg = _load_cfg(q_id)  # baca ulang: bisa aja diedit/distop pas nunggu
+                # Tidur dalam potongan kecil supaya bisa deteksi reset cooldown / stop
+                elapsed = 0.0
+                TICK = 10.0
+                while elapsed < wait_sec:
+                    # Kalau cooldown DB di-reset manual, langsung skip sisa tunggu
+                    if _channel_db_cooldown_remaining(cfg["channel_id"]) == 0.0 and elapsed > 0:
+                        log.info("Query %s: cooldown direset manual, skip sisa tunggu %.0fs", q_id, wait_sec - elapsed)
+                        break
+                    cfg = _load_cfg(q_id)
+                    if cfg is None:
+                        return
+                    if cfg["status"] != "active":
+                        break
+                    sleep_chunk = min(TICK, wait_sec - elapsed)
+                    await asyncio.sleep(sleep_chunk)
+                    elapsed += sleep_chunk
+                cfg = _load_cfg(q_id)
                 if cfg is None:
                     return
                 if cfg["status"] != "active":
