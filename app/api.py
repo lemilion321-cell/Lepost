@@ -788,22 +788,50 @@ def add_query(data: QueryIn, user: User = Depends(current_user), db: Session = D
 def update_query(qid: int, data: QueryPatch, user: User = Depends(current_user), db: Session = Depends(get_db)):
     q = _get_query(db, qid, user)
     d = _dump(data, exclude_unset=True)
+    
+    # Tracking perubahan signifikan yang butuh reset last_run
+    need_reset_lastrun = False
+    
     # cek lisensi aktif kalau mau set status=active (admin bebas)
     if d.get("status") == "active":
         _require_active_license(db, user)
+    
     if d.get("channel_id") is not None:
         _check_channel(d["channel_id"])
+        # Channel berubah → reset last_run (channel baru, cooldown baru)
+        if d["channel_id"] != q.channel_id:
+            need_reset_lastrun = True
+    
     if "bypass_data" in d:
         _check_targets(db, user, data.bypass_data or [])
+        # Cek apakah ada perubahan akun
+        try:
+            old_acc_ids = {int(t["account_id"]) for t in json.loads(q.bypass_data or "[]")}
+            new_acc_ids = {t.account_id for t in (data.bypass_data or [])}
+            # Kalau akun berubah (add/remove/replace) → reset last_run
+            if old_acc_ids != new_acc_ids:
+                need_reset_lastrun = True
+        except (ValueError, KeyError, TypeError):
+            need_reset_lastrun = True  # Error parsing, reset aja buat safety
+        
         q.bypass_data = json.dumps([_dump(t) for t in (data.bypass_data or [])])
+    
     if "webhook_url" in d:
         _check_webhook(d["webhook_url"] or "")
         q.webhook_url = d["webhook_url"] or ""
+    
     if "embed" in d:
         q.embed_json = json.dumps(d["embed"] or {})
+    
     for f in ("status", "content", "guild_id", "channel_id", "channel_name", "delay_min", "delay_random_min", "typing_sim"):
         if f in d and d[f] is not None:
             setattr(q, f, d[f])
+    
+    # Reset last_run kalau ada perubahan signifikan
+    # Supaya query bisa langsung posting, tidak nunggu cooldown lama
+    if need_reset_lastrun:
+        q.last_run = None
+    
     db.commit()
     return {"ok": True}
 
