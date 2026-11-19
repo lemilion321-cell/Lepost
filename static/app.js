@@ -1634,7 +1634,6 @@ function cardHtml(q, n) {
       <button type="button" class="btn ${on ? 'btn-stop' : 'btn-start'}" data-act="toggle" data-id="${q.id}" data-status="${esc(q.status)}">${icon(on ? 'stop' : 'play')}<span>${on ? 'Stop' : 'Start'}</span></button>
       <button type="button" class="btn" data-act="edit" data-id="${q.id}">${icon('edit')}<span>Edit</span></button>
       <button type="button" class="btn" data-act="clone" data-id="${q.id}">${icon('copy')}<span>Clone</span></button>
-      <button type="button" class="btn" data-act="reset-cooldown" data-id="${q.id}" title="Reset cooldown channel supaya bisa langsung kirim">${icon('refresh')}<span>Reset CD</span></button>
       <button type="button" class="btn btn-danger" data-act="delete" data-id="${q.id}" ${q.status==='active'?'disabled title="Stop query dulu sebelum menghapus"':''} >${icon('trash')}<span>Hapus</span></button>
     </div>
   </article>`;
@@ -1908,7 +1907,6 @@ document.addEventListener('click', e => {
     case 'toggle':           return toggleQ(id, el.dataset.status, el);
     case 'edit':             return editQ(id);
     case 'clone':            { const q = state.queries.find(x => x.id === id); ask('Clone Query', q ? `Clone "${q.channel_name}"?` : 'Clone query ini?', 'Clone', false).then(ok => { if (ok) cloneQ(id); }); return; }
-    case 'reset-cooldown':   { const q = state.queries.find(x => x.id === id); ask('Reset Cooldown', `Reset cooldown channel #${q?.channel_name || id}? Query akan langsung kirim di giliran berikutnya.`, 'Reset', false).then(async ok => { if (!ok) return; try { await api('/queries/' + id + '/reset-cooldown', {method:'POST'}); toast('Cooldown direset! Query akan kirim di giliran berikutnya.'); } catch(e) { toast('Gagal reset: ' + e.message, true); } }); return; }
     case 'delete':           return delQ(id);
     case 'toggle-all':       return toggleAll(el.dataset.type);
     case 'new-post':         return openPost(el);
