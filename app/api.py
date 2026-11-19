@@ -1214,6 +1214,7 @@ def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_
             "label": a.label,
             "proxy": a.proxy or "",
             "discord_username": a.discord_username or "",
+            "dc_user": a.discord_username or "",
             "dc_id": getattr(a, "dc_id", "") or "",
             "dc_avatar": getattr(a, "dc_avatar", "") or "",
             "discord_status": getattr(a, "discord_status", "online") or "online",
