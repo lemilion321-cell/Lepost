@@ -799,6 +799,19 @@ def update_query(qid: int, data: QueryPatch, user: User = Depends(current_user),
     return {"ok": True}
 
 
+@router.post("/queries/{qid}/reset-cooldown")
+def reset_query_cooldown(qid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Reset cooldown channel query ini supaya bisa langsung kirim."""
+    from app.models import ChannelState
+    q = _get_query(db, qid, user)
+    ch_id = q.channel_id
+    row = db.query(ChannelState).filter(ChannelState.channel_id == ch_id).first()
+    if row:
+        row.next_allowed_at = None
+        db.commit()
+    return {"ok": True, "channel_id": ch_id}
+
+
 @router.delete("/queries/{qid}")
 def del_query(qid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     q = _get_query(db, qid, user)
