@@ -46,6 +46,22 @@ def _initial_wait(q_id: int, delay_sec: float) -> float:
         db.close()
 
 
+def _channel_db_cooldown_remaining(ch_id) -> float:
+    """Sisa cooldown channel di DB (detik). 0 = sudah boleh kirim."""
+    cid = str(ch_id)
+    db = SessionLocal()
+    try:
+        row = db.get(ChannelState, cid)
+        if row is None or row.next_allowed_at is None:
+            return 0.0
+        remaining = (row.next_allowed_at - utcnow()).total_seconds()
+        return max(0.0, remaining)
+    except Exception:
+        return 0.0
+    finally:
+        db.close()
+
+
 def _claim_channel(ch_id, gap_sec: float) -> bool:
     """Ambil hak kirim ke channel ini. Atomik (lewat DB), jadi aman walau ada
     lebih dari satu query/proses yang mau kirim ke channel yang sama.
@@ -275,6 +291,19 @@ async def _post_once(cfg: dict, turn: int) -> bool:
     async with Discord(acc["token"], acc["proxy"]) as dc:
         slow = await _channel_slowmode(dc, cfg["channel_id"])
         gap = max(slow + 2.0, MIN_DELAY_SEC)
+
+        # Kalau DB bilang masih cooldown, cek Discord langsung —
+        # mungkin slowmode-nya sudah selesai duluan (mis. ganti akun / server reset).
+        db_remaining = _channel_db_cooldown_remaining(cfg["channel_id"])
+        if db_remaining > 0 and slow == 0.0:
+            # Discord bilang ga ada slowmode → reset cooldown DB, boleh kirim sekarang
+            _set_channel_cooldown(cfg["channel_id"], 0)
+            log.info("Query %s: cooldown DB direset (Discord sudah clear), langsung kirim ke #%s", qid, chan)
+        elif db_remaining > 0 and db_remaining > slow + 2.0:
+            # Sisa cooldown DB lebih panjang dari slowmode Discord asli → pakai slowmode Discord
+            _set_channel_cooldown(cfg["channel_id"], slow + 2.0)
+            log.info("Query %s: cooldown DB dipercepat sesuai slowmode Discord (%ds) untuk #%s", qid, int(slow), chan)
+
         # Anti-dobel: 1 channel cuma boleh dapat 1 post per window slowmode,
         # walau ada query/akun/proses lain yang mau kirim di saat yang sama.
         if not _claim_channel(cfg["channel_id"], gap):
