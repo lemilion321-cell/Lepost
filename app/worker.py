@@ -381,6 +381,7 @@ async def run_query_loop(q_id: int):
     turn = 0       # giliran akun (mode bypass)
     validated = False  # sudah validasi token?
     last_status = "active"  # tracking status sebelumnya buat re-validasi
+    last_token_hash: dict = {}  # {account_id: hash(token)} buat deteksi token berubah
 
     while True:
         try:
@@ -395,10 +396,30 @@ async def run_query_loop(q_id: int):
                     validated = False
                     first = True
                     turn = 0
+                    last_token_hash = {}
                 last_status = cfg["status"]
                 await asyncio.sleep(5)
                 continue
             last_status = "active"
+
+            # Deteksi token berubah saat query sedang aktif (misal user ganti token)
+            # Kalau ada token yang berubah, reset validated & first supaya langsung
+            # re-validasi dan posting tanpa nunggu cooldown akun lama
+            targets = cfg.get("targets", [])
+            token_changed = False
+            for t in targets:
+                aid = t.get("account_id")
+                acc = _load_acc(aid)
+                if not acc:
+                    continue
+                cur_hash = hash(acc["token"])
+                if last_token_hash.get(aid) is not None and last_token_hash[aid] != cur_hash:
+                    token_changed = True
+                last_token_hash[aid] = cur_hash
+            if token_changed:
+                log.info("Query %s: token berubah, re-validasi & reset cooldown", q_id)
+                validated = False
+                first = True
 
             # Validasi token sekali saat pertama kali aktif
             if not validated:

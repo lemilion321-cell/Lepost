@@ -691,6 +691,15 @@ async def patch_account(aid: int, data: AccountPatch, user: User = Depends(curre
         acc.dc_avatar = result.get("avatar", "") or getattr(acc, "dc_avatar", "") or ""
         if data.proxy is not None:
             acc.proxy = proxy
+        # Reset last_run semua query yang pakai akun ini supaya worker tidak
+        # ikut-ikutan cooldown akun lama dan langsung bisa posting dengan token baru
+        for q in db.query(Query).all():
+            try:
+                acc_ids = {int(t["account_id"]) for t in json.loads(q.bypass_data or "[]")}
+            except Exception:
+                acc_ids = set()
+            if aid in acc_ids:
+                q.last_run = None
     if data.label is not None:
         acc.label = data.label.strip() or acc.label
     db.commit()
