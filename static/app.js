@@ -842,12 +842,8 @@ function drawActivityChart(canvas, rows, activeIdx = -1) {
   const errV = safeRows.map(r => (r && typeof r.error   === 'number') ? r.error   : 0);
   const rawMax = Math.max(1, ...okV, ...errV);
 
-  let maxVal = 5;
-  if (rawMax <= 5) maxVal = 5;
-  else if (rawMax <= 10) maxVal = 10;
-  else if (rawMax <= 20) maxVal = 20;
-  else if (rawMax <= 50) maxVal = Math.ceil(rawMax / 10) * 10;
-  else maxVal = Math.ceil(rawMax / 25) * 25;
+  // scale to the data with slight headroom so bars use the full plot height
+  const maxVal = Math.max(rawMax * 1.08, 2);
 
   const labels = safeRows.map(r => dayLabel(r && r.date ? r.date : ''));
 
@@ -1056,7 +1052,7 @@ async function loadDashQueries() {
           return `<li class="run-flat-item">
             <span class="run-flat-name">${esc(chn(q.channel_name) || '#channel')}</span>
             <span class="tag ${bypass ? 'tag-bypass' : 'tag-auto'}">${bypass ? 'Bypass' : 'Auto'}</span>
-            <span class="cd js-count run-flat-cd" data-active="1" data-next="${nextOf(q)}"></span>
+            <span class="cd js-count run-flat-cd" data-active="1" data-compact="1" data-next="${nextOf(q)}"></span>
           </li>`;
         }).join('')}</ul>`
       : inlineEmpty('Belum ada yang berjalan.', 'Tekan Start di Auto Post atau Bypass.');
@@ -1094,14 +1090,18 @@ async function loadDashLogs() {
 function tickCountdown() {
   const now = Date.now();
   document.querySelectorAll('.js-count').forEach(el => {
+    const compact = el.dataset.compact === '1';
     if (el.dataset.active === '0') {
       const last = el.dataset.last;
-      setText(el, last ? `Terakhir jalan ${fmtDur((now - new Date(last)) / 1000)} lalu` : 'Belum pernah jalan');
+      setText(el, last
+        ? (compact ? `${fmtDur((now - new Date(last)) / 1000)} lalu` : `Terakhir jalan ${fmtDur((now - new Date(last)) / 1000)} lalu`)
+        : (compact ? '—' : 'Belum pernah jalan'));
       return;
     }
     const n = Number(el.dataset.next);
-    if (!n) { setText(el, 'Menunggu post pertama'); return; }
+    if (!n) { setText(el, compact ? '—' : 'Menunggu post pertama'); return; }
     const diff = (n - now) / 1000;
+    if (compact) { setText(el, diff > 0 ? fmtDur(diff) : 'memproses'); return; }
     setText(el, diff > 0 ? `Post berikutnya dalam ${fmtDur(diff)}` : 'Sedang diproses');
   });
 }

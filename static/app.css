@@ -917,6 +917,7 @@ button.pill { cursor: pointer; font: inherit; }
   font-variant-numeric: tabular-nums;
   letter-spacing: -.01em;
   flex-shrink: 0;
+  min-width: 54px; text-align: right;
 }
 @media (max-width: 380px) {
   .run-flat-item { gap: 7px; }
@@ -932,10 +933,22 @@ button.pill { cursor: pointer; font: inherit; }
 #dash-log-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
 #dash-running::-webkit-scrollbar-track,
 #dash-log-list::-webkit-scrollbar-track { background: transparent; }
-#dash-log-list .loglist li { padding: 10px 0; }
-#dash-log-list .log-msg { font-size: 12.5px; }
-#dash-log-list .log-time { font-size: 10.5px; letter-spacing: .01em; }
-#dash-log-list .lvl { font-size: 9px; padding: 2px 6px; letter-spacing: .06em; }
+#dash-log-list .loglist li {
+  padding: 11px 0;
+  grid-template-columns: minmax(0,1fr) auto;
+  row-gap: 5px;
+}
+#dash-log-list .log-msg { grid-column: 1 / -1; grid-row: 1; font-size: 12.5px; }
+#dash-log-list .log-time { grid-column: 1; grid-row: 2; font-size: 10.5px; letter-spacing: .01em; }
+#dash-log-list .lvl { grid-column: 2; grid-row: 2; justify-self: end; font-size: 9px; padding: 2px 6px; letter-spacing: .06em; }
+@media (min-width: 720px) {
+  #dash-log-list .loglist li { grid-template-columns: 88px minmax(0,1fr) 76px; row-gap: 0; }
+  #dash-log-list .log-time { grid-column: 1; grid-row: 1; }
+  #dash-log-list .log-msg { grid-column: 2; grid-row: 1; }
+  #dash-log-list .lvl { grid-column: 3; grid-row: 1; }
+}
+.panel-head .link { font-size: 11px; font-weight: 500; color: var(--muted); min-height: 0; }
+.panel-head .link:hover { color: var(--flame-hi); text-decoration: none; }
 
 /* page-title: judul halaman accounts & admin */
 .page-head { margin-bottom: 20px; }
