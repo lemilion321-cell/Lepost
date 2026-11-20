@@ -47,14 +47,19 @@ async def expiry_notify_loop():
             uls = db.query(UserLicense).filter(
                 UserLicense.expires_at.isnot(None)
             ).all()
+            # Cek sudah ada notif aktif atau sudah dikirimi notif dalam 24 jam terakhir
+            from sqlalchemy import or_
             for ul in uls:
                 secs = (ul.expires_at - now).total_seconds()
                 if secs <= 0 or secs > THREE_DAYS:
                     continue
                 days_left = int(secs // 86400) + 1
-                # Cek sudah ada notif aktif belum
-                existing = db.query(UserBroadcast).filter_by(
-                    user_id=ul.user_id, dismissed=False
+                existing = db.query(UserBroadcast).filter(
+                    UserBroadcast.user_id == ul.user_id,
+                    or_(
+                        UserBroadcast.dismissed == False,
+                        UserBroadcast.created_at >= now - timedelta(hours=24)
+                    )
                 ).first()
                 if existing:
                     continue
@@ -82,7 +87,7 @@ async def manager_loop(app: FastAPI):
     while True:
         db = SessionLocal()
         try:
-            active_ids = {q.id for q in db.query(Query).filter_by(status="active").all()}
+            active_ids = {row[0] for row in db.query(Query.id).filter_by(status="active").all()}
             tasks = app.state.tasks
             for qid in active_ids:
                 t = tasks.get(qid)
@@ -253,7 +258,8 @@ app = FastAPI(lifespan=lifespan)
 @app.middleware("http")
 async def check_ip_blacklist(request, call_next):
     from app.api import _blacklist_cache, _blacklist_loaded, _load_blacklist
-    ip = request.headers.get("x-forwarded-for", request.client.host).split(",")[0].strip()
+    client_host = request.client.host if request.client else "127.0.0.1"
+    ip = request.headers.get("x-forwarded-for", client_host).split(",")[0].strip()
     if not _blacklist_loaded:
         db = SessionLocal()
         try:
@@ -279,6 +285,11 @@ async def security_headers(request, call_next):
 
 app.include_router(router, prefix="/api")
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/health", include_in_schema=False)
+def health():
+    return {"status": "ok", "app": "Lepost"}
 
 
 @app.get("/", include_in_schema=False)

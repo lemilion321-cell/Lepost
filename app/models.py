@@ -110,10 +110,10 @@ class ChannelState(Base):
 class Log(Base):
     __tablename__ = "logs"
     id: Mapped[int] = mapped_column(primary_key=True)
-    query_id: Mapped[Optional[int]] = mapped_column(ForeignKey("queries.id"), nullable=True)
+    query_id: Mapped[Optional[int]] = mapped_column(ForeignKey("queries.id"), nullable=True, index=True)
     level: Mapped[str] = mapped_column(String(8))
     message: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
 
 class UserLicense(Base):
@@ -179,6 +179,14 @@ def _migrate():
                 con.execute(text("ALTER TABLE accounts ADD COLUMN rpc_json TEXT NOT NULL DEFAULT '{}'"))
             if "keep_online" not in cols:
                 con.execute(text("ALTER TABLE accounts ADD COLUMN keep_online INTEGER NOT NULL DEFAULT 0"))
+
+    if "logs" in insp.get_table_names():
+        with engine.begin() as con:
+            try:
+                con.execute(text("CREATE INDEX IF NOT EXISTS ix_logs_query_id ON logs (query_id)"))
+                con.execute(text("CREATE INDEX IF NOT EXISTS ix_logs_created_at ON logs (created_at)"))
+            except Exception:
+                pass
 
 def init_db():
     Base.metadata.create_all(engine)
