@@ -857,7 +857,11 @@ def reset_query_cooldown(qid: int, user: User = Depends(current_user), db: Sessi
         if row:
             row.next_allowed_at = None
             reset_count += 1
-    
+        else:
+            reset_count += 1
+    # Bangunkan worker yang sedang tidur: perubahan last_run memotong sleep
+    q.last_run = None
+
     db.commit()
     return {"ok": True, "channel_id": ch_id, "accounts_reset": reset_count}
 

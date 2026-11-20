@@ -180,6 +180,7 @@ def _load_cfg(q_id: int):
             "webhook": q.webhook_url or "", "channel_id": q.channel_id,
             "channel_name": (q.channel_name or "").lstrip("#"), "delay_sec": delay,
             "typing_sim": bool(getattr(q, "typing_sim", False)),
+            "last_run": q.last_run,
         }
     finally:
         db.close()
@@ -336,7 +337,7 @@ async def _post_once(cfg: dict, turn: int) -> bool:
             if wait <= RETRY_SLEEP_MAX:
                 _log(qid, "INFO", f"[{acc['label']}] Kena slowmode di #{chan}, nunggu {wait:.0f}s lalu kirim ulang.")
                 await asyncio.sleep(wait)
-                res = await dc.send(cfg["channel_id"], txt, cfg["embed"])
+                res = await dc.send(cfg["channel_id"], txt, cfg["embed"], typing_sim=cfg.get("typing_sim", False))
 
     if "error" in res:
         code = res.get("error")
@@ -451,10 +452,13 @@ async def run_query_loop(q_id: int):
                             all_ok = False
                             continue
                         ok = await _validate_token(acc, q_id)
-                        if ok == _INVALID_TOKEN or not ok:
+                        if ok == _INVALID_TOKEN:
                             all_ok = False
+                        elif not ok:
+                            # Error sementara (network/429) bukan alasan menghentikan query
+                            _log(q_id, "INFO", f"[{acc['label']}] Validasi token gagal sementara. Query tetap jalan, dicoba lagi di giliran berikutnya.")
                     if not all_ok:
-                        # Stop query kalau ada token invalid
+                        # Stop query hanya kalau token benar-benar invalid (401/403)
                         db = SessionLocal()
                         try:
                             q = db.get(Query, q_id)
@@ -473,12 +477,16 @@ async def run_query_loop(q_id: int):
                 # Tidur dalam potongan kecil supaya bisa deteksi stop
                 elapsed = 0.0
                 TICK = 10.0
+                base_last_run = cfg.get("last_run")
                 while elapsed < wait_sec:
-                    # TODO: deteksi reset cooldown manual per akun (sekarang tracking per akun+channel)
                     cfg = _load_cfg(q_id)
                     if cfg is None:
                         return
                     if cfg["status"] != "active":
+                        break
+                    # Reset cooldown manual (atau edit query) mengubah last_run -> bangun lebih awal
+                    if cfg.get("last_run") != base_last_run:
+                        log.info("Query %s: last_run berubah, tidur dipotong (reset cooldown)", q_id)
                         break
                     sleep_chunk = min(TICK, wait_sec - elapsed)
                     await asyncio.sleep(sleep_chunk)
