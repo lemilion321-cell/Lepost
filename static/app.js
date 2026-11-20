@@ -736,6 +736,12 @@ function showTab(tab) {
   loadView(tab);
 }
 window.addEventListener('hashchange', () => { const t = currentRoute(); if (t !== 'rpc') window.scrollTo(0, 0); showTab(t); });
+window.addEventListener('resize', () => {
+  if (currentRoute() === 'dashboard' && _chartRows && _chartRows.length) {
+    const c = $('chart-canvas');
+    if (c) drawActivityChart(c, _chartRows, _activeChartIdx);
+  }
+});
 
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
@@ -816,8 +822,8 @@ async function loadStats() {
   }
 }
 
-/* ───────── grafik aktivitas (canvas) ───────── */
-function drawLineChart(canvas, rows) {
+/* ───────── grafik aktivitas (dual rounded bar) ───────── */
+function drawActivityChart(canvas, rows, activeIdx = -1) {
   if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth || 320, H = canvas.clientHeight || 180;
@@ -827,139 +833,193 @@ function drawLineChart(canvas, rows) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.scale(dpr, dpr);
-  const PAD = { top: 20, right: 20, bottom: 36, left: 40 };
-  const cW = W - PAD.left - PAD.right;
-  const cH = H - PAD.top  - PAD.bottom;
-  if (cW <= 0 || cH <= 0) return;
 
   const safeRows = Array.isArray(rows) ? rows : [];
-  const okV  = safeRows.map(r => (r && typeof r.success === 'number') ? r.success : 0);
-  const errV = safeRows.map(r => (r && typeof r.error   === 'number') ? r.error   : 0);
-  const maxVal = Math.max(1, ...okV, ...errV);
-  const labels = safeRows.map(r => dayLabel(r && r.date ? r.date : ''));
   const n = safeRows.length;
   if (n === 0) return;
 
-  const xOf = i => PAD.left + (n < 2 ? cW / 2 : i * cW / (n - 1));
-  const yOf = v => PAD.top + cH - (v / maxVal * cH);
+  const okV  = safeRows.map(r => (r && typeof r.success === 'number') ? r.success : 0);
+  const errV = safeRows.map(r => (r && typeof r.error   === 'number') ? r.error   : 0);
+  const rawMax = Math.max(1, ...okV, ...errV);
 
-  // background area subtle
+  let maxVal = 5;
+  if (rawMax <= 5) maxVal = 5;
+  else if (rawMax <= 10) maxVal = 10;
+  else if (rawMax <= 20) maxVal = 20;
+  else if (rawMax <= 50) maxVal = Math.ceil(rawMax / 10) * 10;
+  else maxVal = Math.ceil(rawMax / 25) * 25;
+
+  const labels = safeRows.map(r => dayLabel(r && r.date ? r.date : ''));
+
+  const PAD = { top: 26, right: 14, bottom: 28, left: 32 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+  if (cW <= 0 || cH <= 0) return;
+
+  // Background subtle gradient inside chart area
   const bgGrad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-  bgGrad.addColorStop(0, 'rgba(200,122,74,0.03)');
-  bgGrad.addColorStop(1, 'transparent');
+  bgGrad.addColorStop(0, 'rgba(255, 255, 255, 0.015)');
+  bgGrad.addColorStop(1, 'rgba(255, 255, 255, 0.002)');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(PAD.left, PAD.top, cW, cH);
 
-  // grid lines horizontal
-  const gridSteps = [0, 0.25, 0.5, 0.75, 1];
-  gridSteps.forEach((t, idx) => {
-    const y = PAD.top + cH * (1 - t);
-    // main grid line
-    ctx.strokeStyle = idx === 0 ? 'rgba(200,122,74,0.18)' : 'rgba(255,255,255,0.055)';
-    ctx.lineWidth = idx === 0 ? 1.5 : 1;
-    ctx.setLineDash(idx === 0 ? [] : [3, 4]);
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
-    ctx.setLineDash([]);
-  });
-
-  // vertical grid lines
-  labels.forEach((_, i) => {
-    if (i === 0 || i === n - 1) return;
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  // Horizontal grid lines (0, 0.5, 1)
+  const steps = [0, 0.5, 1];
+  ctx.setLineDash([3, 4]);
+  steps.forEach(t => {
+    const y = Math.round(PAD.top + cH * (1 - t));
+    ctx.strokeStyle = t === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)';
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(xOf(i), PAD.top); ctx.lineTo(xOf(i), PAD.top + cH); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(PAD.left, y);
+    ctx.lineTo(PAD.left + cW, y);
+    ctx.stroke();
+
+    // Y labels
+    const v = Math.round(maxVal * t);
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
+    ctx.font = '500 10px Inter,system-ui,sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(v, PAD.left - 6, y + 3.5);
+  });
+  ctx.setLineDash([]);
+
+  const colW = cW / n;
+  const barGap = 3;
+  const barW = Math.max(7, Math.min(13, Math.floor((colW - 14) / 2)));
+  const pairW = barW * 2 + barGap;
+  const baseY = PAD.top + cH;
+
+  // Draw day columns
+  safeRows.forEach((r, i) => {
+    const cx = PAD.left + i * colW + colW / 2;
+    const isToday = i === n - 1;
+    const isActive = activeIdx === i;
+
+    // Highlight active / tapped day column
+    if (isActive) {
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      if (ctx.roundRect) {
+        ctx.beginPath();
+        ctx.roundRect(PAD.left + i * colW + 2, PAD.top - 2, colW - 4, cH + 4, 6);
+        ctx.fill();
+      } else {
+        ctx.fillRect(PAD.left + i * colW + 2, PAD.top - 2, colW - 4, cH + 4);
+      }
+    }
+
+    const ok = okV[i];
+    const err = errV[i];
+    const okH = Math.max(0, Math.round((ok / maxVal) * cH));
+    const errH = Math.max(0, Math.round((err / maxVal) * cH));
+
+    const okX = Math.round(cx - pairW / 2);
+    const errX = okX + barW + barGap;
+
+    function drawPill(x, h, gradTop, gradBottom) {
+      if (h <= 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.07)';
+        ctx.fillRect(x, baseY - 2, barW, 2);
+        return;
+      }
+      const y = baseY - h;
+      const r = Math.min(3.5, barW / 2, h / 2);
+      const grad = ctx.createLinearGradient(0, y, 0, baseY);
+      grad.addColorStop(0, gradTop);
+      grad.addColorStop(1, gradBottom);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, barW, h, [r, r, 0, 0]);
+      } else {
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + barW - r, y);
+        ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+        ctx.lineTo(x + barW, baseY);
+        ctx.lineTo(x, baseY);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+      ctx.fill();
+    }
+
+    // Sukses: Emerald Green
+    drawPill(okX, okH, '#22c55e', '#15803d');
+    // Gagal: Coral Red
+    drawPill(errX, errH, '#f87171', '#dc2626');
+
+    // Numbers above bars
+    ctx.font = '600 9.5px Inter,system-ui,sans-serif';
+    ctx.textAlign = 'center';
+
+    if (ok > 0) {
+      ctx.fillStyle = '#4ade80';
+      const textY = Math.max(baseY - okH - 4, PAD.top + 2);
+      ctx.fillText(ok, okX + barW / 2, textY);
+    }
+    if (err > 0) {
+      ctx.fillStyle = '#f87171';
+      const textY = Math.max(baseY - errH - 4, PAD.top + 2);
+      ctx.fillText(err, errX + barW / 2, textY);
+    }
+
+    // Day labels
+    ctx.textAlign = 'center';
+    if (isToday) {
+      ctx.fillStyle = '#e09060';
+      ctx.font = '700 10.5px Inter,system-ui,sans-serif';
+      ctx.fillText(labels[i], cx, H - 8);
+      ctx.beginPath();
+      ctx.arc(cx, H - 2.5, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#e09060';
+      ctx.fill();
+    } else {
+      ctx.fillStyle = isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)';
+      ctx.font = '500 10px Inter,system-ui,sans-serif';
+      ctx.fillText(labels[i], cx, H - 8);
+    }
   });
 
-  // y-labels
-  ctx.fillStyle = 'rgba(200,122,74,0.6)';
-  ctx.font = '600 10px Inter,system-ui,sans-serif';
-  ctx.textAlign = 'right';
-  [0, 0.5, 1].forEach(t => {
-    const val = Math.round(maxVal * t);
-    ctx.fillText(val, PAD.left - 8, PAD.top + cH * (1 - t) + 4);
-  });
+  // Floating tooltip on tap/hover
+  if (activeIdx >= 0 && activeIdx < n) {
+    const r = safeRows[activeIdx];
+    const ok = okV[activeIdx], err = errV[activeIdx];
+    const dObj = r && r.date ? new Date(r.date + 'T00:00:00Z') : null;
+    const fullDate = dObj && !isNaN(dObj)
+      ? dObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' })
+      : labels[activeIdx];
+    const tipText = `${fullDate}: ${ok} sukses, ${err} gagal`;
 
-  function drawLine(vals, color, fillColor, glowColor) {
-    if (!vals.some(v => v > 0)) return;
-    // smooth curve via bezier
-    ctx.beginPath();
-    vals.forEach((v, i) => {
-      const x = xOf(i), y = yOf(v);
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        const px = xOf(i - 1), py = yOf(vals[i - 1]);
-        const cpx = (px + x) / 2;
-        ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
-      }
-    });
-    // glow shadow
+    ctx.font = '600 10px Inter,system-ui,sans-serif';
+    const tw = ctx.measureText(tipText).width;
+    const bw = tw + 16, bh = 20;
+    const bx = Math.min(Math.max(PAD.left, PAD.left + activeIdx * colW + colW / 2 - bw / 2), W - PAD.right - bw);
+    const by = 2;
+
     ctx.save();
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 8;
-    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = 'rgba(24, 25, 29, 0.95)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 5);
+    else ctx.fillRect(bx, by, bw, bh);
+    ctx.fill();
+    ctx.stroke();
     ctx.restore();
 
-    // area fill under curve
-    ctx.beginPath();
-    vals.forEach((v, i) => {
-      const x = xOf(i), y = yOf(v);
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        const px = xOf(i - 1), py = yOf(vals[i - 1]);
-        const cpx = (px + x) / 2;
-        ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
-      }
-    });
-    ctx.lineTo(xOf(vals.length - 1), PAD.top + cH);
-    ctx.lineTo(xOf(0), PAD.top + cH);
-    ctx.closePath();
-    const areaGrad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-    areaGrad.addColorStop(0, fillColor);
-    areaGrad.addColorStop(0.7, 'transparent');
-    ctx.fillStyle = areaGrad; ctx.fill();
-
-    // dots with ring
-    ctx.save();
-    vals.forEach((v, i) => {
-      if (v > 0) {
-        const x = xOf(i), y = yOf(v);
-        // outer ring
-        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fill();
-        // inner dot
-        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-        ctx.fillStyle = color; ctx.fill();
-        // value label above dot
-        ctx.fillStyle = color;
-        ctx.font = '700 9px Inter,system-ui,sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(v, x, Math.max(y - 10, PAD.top + 8));
-      }
-    });
-    ctx.restore();
+    ctx.fillStyle = '#f4f4f5';
+    ctx.textAlign = 'center';
+    ctx.fillText(tipText, bx + bw / 2, by + 13.5);
   }
-
-  drawLine(errV, '#ff6b6b', 'rgba(255,107,107,0.18)', 'rgba(255,107,107,0.4)');
-  drawLine(okV,  '#c87a4a', 'rgba(200,122,74,0.22)', 'rgba(200,122,74,0.5)');
-
-  // x-labels styled
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  ctx.font = '600 10px Inter,system-ui,sans-serif';
-  ctx.textAlign = 'center';
-  labels.forEach((l, i) => {
-    const x = xOf(i);
-    // active day tick
-    ctx.fillStyle = 'rgba(200,122,74,0.4)';
-    ctx.fillRect(x - 0.5, PAD.top + cH + 4, 1, 4);
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.fillText(l, x, H - 6);
-  });
 }
 
 let _chartAnim = null;
+let _chartRows = [];
+let _activeChartIdx = -1;
+
 async function loadActivity() {
   const box = $('chart');
   if (!box) return;
@@ -967,6 +1027,7 @@ async function loadActivity() {
     const rows = await api('/stats/activity?days=7');
     if (!changed('chart', rows)) return;
     const safeRows = Array.isArray(rows) ? rows : [];
+    _chartRows = safeRows;
     const ok  = sum(safeRows.map(r => r.success || 0));
     const bad = sum(safeRows.map(r => r.error   || 0));
     setText('chart-sum', ok + bad ? `${ok} sukses, ${bad} gagal dalam 7 hari` : 'Belum ada aktivitas');
@@ -974,19 +1035,40 @@ async function loadActivity() {
       box.innerHTML = '<p class="chart-empty">Belum ada aktivitas dalam 7 hari terakhir.</p>';
       return;
     }
-    box.innerHTML = '<canvas id="chart-canvas" style="width:100%;height:180px;display:block"></canvas>';
+    box.innerHTML = '<canvas id="chart-canvas" style="width:100%;height:180px;display:block;cursor:pointer"></canvas>';
     const canvas = $('chart-canvas');
     if (!canvas) return;
-    let frame = 0; const totalFrames = 40;
+
+    function handlePointer(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = (e.touches && e.touches.length) ? e.touches[0].clientX : e.clientX;
+      if (typeof clientX !== 'number') return;
+      const x = clientX - rect.left;
+      const W = rect.width;
+      const PAD = { left: 32, right: 14 };
+      const cW = W - PAD.left - PAD.right;
+      if (x < PAD.left || x > W - PAD.right) {
+        _activeChartIdx = -1;
+      } else {
+        const colW = cW / safeRows.length;
+        const idx = Math.floor((x - PAD.left) / colW);
+        _activeChartIdx = Math.max(0, Math.min(safeRows.length - 1, idx));
+      }
+      drawActivityChart(canvas, safeRows, _activeChartIdx);
+    }
+    canvas.addEventListener('click', handlePointer);
+    canvas.addEventListener('touchstart', handlePointer, { passive: true });
+
+    let frame = 0; const totalFrames = 25;
     if (_chartAnim) cancelAnimationFrame(_chartAnim);
     function animate() {
       frame++;
       const ease = 1 - Math.pow(1 - Math.min(frame / totalFrames, 1), 3);
-      drawLineChart(canvas, safeRows.map(r => ({
+      drawActivityChart(canvas, safeRows.map(r => ({
         date: r.date,
         success: Math.round((r.success || 0) * ease),
         error:   Math.round((r.error   || 0) * ease),
-      })));
+      })), _activeChartIdx);
       if (ease < 1) _chartAnim = requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
