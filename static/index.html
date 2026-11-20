@@ -187,7 +187,7 @@
           <button type="button" id="hero-retry" class="link-btn" data-act="refresh" hidden>Coba lagi</button>
         </div>
         <div id="ring" class="ring" role="img" aria-label="Tingkat sukses belum ada data">
-          <svg width="58" height="58" viewBox="0 0 72 72" aria-hidden="true" focusable="false">
+          <svg width="76" height="76" viewBox="0 0 72 72" aria-hidden="true" focusable="false">
             <circle class="ring-bg" cx="36" cy="36" r="30"/>
             <circle id="ring-fg" class="ring-fg" cx="36" cy="36" r="30"/>
           </svg>
@@ -197,24 +197,27 @@
       </div>
       <div class="stats">
         <article class="stat stat-hero">
-          <p class="stat-label">Total post</p>
+          <p class="stat-label">Total Post</p>
           <p id="stat-total" class="stat-big tabnum">0</p>
           <p id="stat-sub-total" class="stat-sub">&nbsp;</p>
         </article>
         <div class="stat-row">
           <article id="card-active" class="stat">
+            <span class="stat-ic ic-green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+            <p id="stat-active" class="stat-num num-green tabnum">0</p>
             <p class="stat-lbl">Aktif</p>
-            <p id="stat-active" class="stat-num tabnum">0</p>
             <p id="stat-sub-active" class="stat-sub">&nbsp;</p>
           </article>
           <article id="card-failed" class="stat">
+            <span class="stat-ic ic-red" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></span>
+            <p id="stat-failed" class="stat-num num-red tabnum">0</p>
             <p class="stat-lbl">Gagal</p>
-            <p id="stat-failed" class="stat-num tabnum">0</p>
             <p id="stat-sub-failed" class="stat-sub">&nbsp;</p>
           </article>
           <article id="card-accounts" class="stat">
+            <span class="stat-ic ic-violet" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M22 11h-6"/></svg></span>
+            <p id="stat-accounts" class="stat-num num-violet tabnum">0</p>
             <p class="stat-lbl">Akun</p>
-            <p id="stat-accounts" class="stat-num tabnum">0</p>
             <p id="stat-sub-accounts" class="stat-sub">&nbsp;</p>
           </article>
         </div>
@@ -230,12 +233,12 @@
         <section class="panel" aria-labelledby="p-run">
           <div class="panel-head">
             <h3 id="p-run" class="panel-title">Berjalan</h3>
-            <span class="panel-meta">live</span>
+            <span class="pill pill-on">Live</span>
           </div>
           <div id="dash-running" class="panel-body run-list"></div>
         </section>
       </div>
-      <section class="panel panel-log" aria-labelledby="p-log">
+      <section class="panel" aria-labelledby="p-log" style="margin-top:12px">
         <div class="panel-head">
           <h3 id="p-log" class="panel-title">Log terbaru</h3>
           <a class="link" href="#logs">Lihat semua</a>

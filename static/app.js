@@ -736,12 +736,6 @@ function showTab(tab) {
   loadView(tab);
 }
 window.addEventListener('hashchange', () => { const t = currentRoute(); if (t !== 'rpc') window.scrollTo(0, 0); showTab(t); });
-window.addEventListener('resize', () => {
-  if (currentRoute() === 'dashboard' && _chartRows && _chartRows.length) {
-    const c = $('chart-canvas');
-    if (c) drawActivityChart(c, _chartRows, _activeChartIdx);
-  }
-});
 
 function loadView(tab) {
   if (tab === 'dashboard') return Promise.all([loadActivity(), loadDashQueries(), loadDashLogs()]);
@@ -822,8 +816,8 @@ async function loadStats() {
   }
 }
 
-/* ───────── grafik aktivitas (dual rounded bar) ───────── */
-function drawActivityChart(canvas, rows, activeIdx = -1) {
+/* ───────── grafik aktivitas (canvas) ───────── */
+function drawLineChart(canvas, rows) {
   if (!canvas) return;
   const dpr = window.devicePixelRatio || 1;
   const W = canvas.clientWidth || 320, H = canvas.clientHeight || 180;
@@ -833,144 +827,139 @@ function drawActivityChart(canvas, rows, activeIdx = -1) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.scale(dpr, dpr);
+  const PAD = { top: 20, right: 20, bottom: 36, left: 40 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top  - PAD.bottom;
+  if (cW <= 0 || cH <= 0) return;
 
   const safeRows = Array.isArray(rows) ? rows : [];
+  const okV  = safeRows.map(r => (r && typeof r.success === 'number') ? r.success : 0);
+  const errV = safeRows.map(r => (r && typeof r.error   === 'number') ? r.error   : 0);
+  const maxVal = Math.max(1, ...okV, ...errV);
+  const labels = safeRows.map(r => dayLabel(r && r.date ? r.date : ''));
   const n = safeRows.length;
   if (n === 0) return;
 
-  const okV  = safeRows.map(r => (r && typeof r.success === 'number') ? r.success : 0);
-  const errV = safeRows.map(r => (r && typeof r.error   === 'number') ? r.error   : 0);
-  const rawMax = Math.max(1, ...okV, ...errV);
+  const xOf = i => PAD.left + (n < 2 ? cW / 2 : i * cW / (n - 1));
+  const yOf = v => PAD.top + cH - (v / maxVal * cH);
 
-  // scale to the data with slight headroom so bars use the full plot height
-  const maxVal = Math.max(rawMax * 1.08, 2);
+  // background area subtle
+  const bgGrad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+  bgGrad.addColorStop(0, 'rgba(200,122,74,0.03)');
+  bgGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(PAD.left, PAD.top, cW, cH);
 
-  const labels = safeRows.map(r => dayLabel(r && r.date ? r.date : ''));
-
-  const PAD = { top: 22, right: 4, bottom: 26, left: 4 };
-  const cW = W - PAD.left - PAD.right;
-  const cH = H - PAD.top - PAD.bottom;
-  if (cW <= 0 || cH <= 0) return;
-
-  const colW = cW / n;
-  const barGap = 2;
-  const barW = Math.max(6, Math.min(11, Math.floor((colW - 12) / 2)));
-  const pairW = barW * 2 + barGap;
-  const baseY = Math.round(PAD.top + cH) + 0.5;
-
-  // single baseline rule — no grid, no axis chrome
-  ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD.left, baseY);
-  ctx.lineTo(PAD.left + cW, baseY);
-  ctx.stroke();
-
-  // no axis chrome, no grid — the rules below carry the structure
-
-  safeRows.forEach((r, i) => {
-    const cx = PAD.left + i * colW + colW / 2;
-    const isToday = i === n - 1;
-    const isActive = activeIdx === i;
-
-    const ok = okV[i];
-    const err = errV[i];
-    const okH = ok > 0 ? Math.max(2, Math.round((ok / maxVal) * cH)) : 0;
-    const errH = err > 0 ? Math.max(2, Math.round((err / maxVal) * cH)) : 0;
-
-    const okX = Math.round(cx - pairW / 2);
-    const errX = okX + barW + barGap;
-
-    if (isActive) {
-      ctx.fillStyle = 'rgba(255,255,255,0.045)';
-      ctx.fillRect(PAD.left + i * colW + 1, PAD.top - 4, colW - 2, cH + 4);
-    }
-
-    function bar(x, h, color) {
-      if (h <= 0) return;
-      const y = baseY - h;
-      const r = Math.min(2, barW / 2, h / 2);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(x, y, barW, h, [r, r, 0, 0]);
-      } else {
-        ctx.moveTo(x + r, y);
-        ctx.lineTo(x + barW - r, y);
-        ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
-        ctx.lineTo(x + barW, baseY);
-        ctx.lineTo(x, baseY);
-        ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
-        ctx.closePath();
-      }
-      ctx.fill();
-    }
-
-    bar(okX, okH, isToday ? '#6fbf92' : '#549c78');
-    bar(errX, errH, isToday ? '#d27070' : '#a85a5a');
-
-    // values only where they carry meaning
-    ctx.font = '500 9px Inter,system-ui,sans-serif';
-    ctx.textAlign = 'center';
-    if (ok > 0) {
-      ctx.fillStyle = 'rgba(122,190,155,0.9)';
-      ctx.fillText(ok, okX + barW / 2, Math.max(baseY - okH - 5, PAD.top - 2));
-    }
-    if (err > 0) {
-      ctx.fillStyle = 'rgba(206,122,122,0.9)';
-      ctx.fillText(err, errX + barW / 2, Math.max(baseY - errH - 5, PAD.top - 2));
-    }
-
-    ctx.textAlign = 'center';
-    if (isToday) {
-      ctx.fillStyle = 'rgba(255,255,255,0.82)';
-      ctx.font = '600 9.5px Inter,system-ui,sans-serif';
-      ctx.fillText(labels[i], cx, H - 9);
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.fillRect(Math.round(cx - 5), H - 4, 10, 1.5);
-    } else {
-      ctx.fillStyle = isActive ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.34)';
-      ctx.font = '500 9.5px Inter,system-ui,sans-serif';
-      ctx.fillText(labels[i], cx, H - 9);
-    }
+  // grid lines horizontal
+  const gridSteps = [0, 0.25, 0.5, 0.75, 1];
+  gridSteps.forEach((t, idx) => {
+    const y = PAD.top + cH * (1 - t);
+    // main grid line
+    ctx.strokeStyle = idx === 0 ? 'rgba(200,122,74,0.18)' : 'rgba(255,255,255,0.055)';
+    ctx.lineWidth = idx === 0 ? 1.5 : 1;
+    ctx.setLineDash(idx === 0 ? [] : [3, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
+    ctx.setLineDash([]);
   });
 
-  // Tooltip: flat, bordered, no shadow
-  if (activeIdx >= 0 && activeIdx < n) {
-    const r = safeRows[activeIdx];
-    const ok = okV[activeIdx], err = errV[activeIdx];
-    const dObj = r && r.date ? new Date(r.date + 'T00:00:00Z') : null;
-    const fullDate = dObj && !isNaN(dObj)
-      ? dObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
-      : labels[activeIdx];
-    const tipText = `${fullDate} · ${ok} sukses · ${err} gagal`;
-
-    ctx.font = '500 10px Inter,system-ui,sans-serif';
-    const tw = ctx.measureText(tipText).width;
-    const bw = tw + 16, bh = 21;
-    const bx = Math.min(Math.max(0, PAD.left + activeIdx * colW + colW / 2 - bw / 2), W - bw);
-    const by = 0;
-
-    ctx.fillStyle = '#0f1115';
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  // vertical grid lines
+  labels.forEach((_, i) => {
+    if (i === 0 || i === n - 1) return;
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(bx + 0.5, by + 0.5, bw, bh, 3);
-    else ctx.fillRect(bx, by, bw, bh);
-    ctx.fill();
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xOf(i), PAD.top); ctx.lineTo(xOf(i), PAD.top + cH); ctx.stroke();
+  });
 
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.textAlign = 'center';
-    ctx.fillText(tipText, bx + bw / 2, by + 14);
+  // y-labels
+  ctx.fillStyle = 'rgba(200,122,74,0.6)';
+  ctx.font = '600 10px Inter,system-ui,sans-serif';
+  ctx.textAlign = 'right';
+  [0, 0.5, 1].forEach(t => {
+    const val = Math.round(maxVal * t);
+    ctx.fillText(val, PAD.left - 8, PAD.top + cH * (1 - t) + 4);
+  });
+
+  function drawLine(vals, color, fillColor, glowColor) {
+    if (!vals.some(v => v > 0)) return;
+    // smooth curve via bezier
+    ctx.beginPath();
+    vals.forEach((v, i) => {
+      const x = xOf(i), y = yOf(v);
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        const px = xOf(i - 1), py = yOf(vals[i - 1]);
+        const cpx = (px + x) / 2;
+        ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
+      }
+    });
+    // glow shadow
+    ctx.save();
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 8;
+    ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.restore();
+
+    // area fill under curve
+    ctx.beginPath();
+    vals.forEach((v, i) => {
+      const x = xOf(i), y = yOf(v);
+      if (i === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        const px = xOf(i - 1), py = yOf(vals[i - 1]);
+        const cpx = (px + x) / 2;
+        ctx.bezierCurveTo(cpx, py, cpx, y, x, y);
+      }
+    });
+    ctx.lineTo(xOf(vals.length - 1), PAD.top + cH);
+    ctx.lineTo(xOf(0), PAD.top + cH);
+    ctx.closePath();
+    const areaGrad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+    areaGrad.addColorStop(0, fillColor);
+    areaGrad.addColorStop(0.7, 'transparent');
+    ctx.fillStyle = areaGrad; ctx.fill();
+
+    // dots with ring
+    ctx.save();
+    vals.forEach((v, i) => {
+      if (v > 0) {
+        const x = xOf(i), y = yOf(v);
+        // outer ring
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fill();
+        // inner dot
+        ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = color; ctx.fill();
+        // value label above dot
+        ctx.fillStyle = color;
+        ctx.font = '700 9px Inter,system-ui,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(v, x, Math.max(y - 10, PAD.top + 8));
+      }
+    });
+    ctx.restore();
   }
+
+  drawLine(errV, '#ff6b6b', 'rgba(255,107,107,0.18)', 'rgba(255,107,107,0.4)');
+  drawLine(okV,  '#c87a4a', 'rgba(200,122,74,0.22)', 'rgba(200,122,74,0.5)');
+
+  // x-labels styled
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.font = '600 10px Inter,system-ui,sans-serif';
+  ctx.textAlign = 'center';
+  labels.forEach((l, i) => {
+    const x = xOf(i);
+    // active day tick
+    ctx.fillStyle = 'rgba(200,122,74,0.4)';
+    ctx.fillRect(x - 0.5, PAD.top + cH + 4, 1, 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillText(l, x, H - 6);
+  });
 }
 
 let _chartAnim = null;
-let _chartRows = [];
-let _activeChartIdx = -1;
-
 async function loadActivity() {
   const box = $('chart');
   if (!box) return;
@@ -978,7 +967,6 @@ async function loadActivity() {
     const rows = await api('/stats/activity?days=7');
     if (!changed('chart', rows)) return;
     const safeRows = Array.isArray(rows) ? rows : [];
-    _chartRows = safeRows;
     const ok  = sum(safeRows.map(r => r.success || 0));
     const bad = sum(safeRows.map(r => r.error   || 0));
     setText('chart-sum', ok + bad ? `${ok} sukses, ${bad} gagal dalam 7 hari` : 'Belum ada aktivitas');
@@ -986,45 +974,19 @@ async function loadActivity() {
       box.innerHTML = '<p class="chart-empty">Belum ada aktivitas dalam 7 hari terakhir.</p>';
       return;
     }
-    box.innerHTML = '<canvas id="chart-canvas" style="width:100%;height:186px;display:block;cursor:pointer;touch-action:manipulation"></canvas>';
+    box.innerHTML = '<canvas id="chart-canvas" style="width:100%;height:180px;display:block"></canvas>';
     const canvas = $('chart-canvas');
     if (!canvas) return;
-
-    function handlePointer(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = (e.touches && e.touches.length) ? e.touches[0].clientX : e.clientX;
-      if (typeof clientX !== 'number') return;
-      const x = clientX - rect.left;
-      const W = rect.width;
-      const PAD = { left: 4, right: 4 };
-      const cW = W - PAD.left - PAD.right;
-      if (x < PAD.left || x > W - PAD.right) {
-        _activeChartIdx = -1;
-      } else {
-        const colW = cW / safeRows.length;
-        const idx = Math.floor((x - PAD.left) / colW);
-        _activeChartIdx = Math.max(0, Math.min(safeRows.length - 1, idx));
-      }
-      drawActivityChart(canvas, safeRows, _activeChartIdx);
-    }
-    canvas.addEventListener('click', handlePointer);
-    canvas.addEventListener('touchstart', handlePointer, { passive: true });
-
-    let frame = 0; const totalFrames = 25;
+    let frame = 0; const totalFrames = 40;
     if (_chartAnim) cancelAnimationFrame(_chartAnim);
-    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduceMotion) {
-      drawActivityChart(canvas, safeRows, _activeChartIdx);
-      return;
-    }
     function animate() {
       frame++;
       const ease = 1 - Math.pow(1 - Math.min(frame / totalFrames, 1), 3);
-      drawActivityChart(canvas, safeRows.map(r => ({
+      drawLineChart(canvas, safeRows.map(r => ({
         date: r.date,
         success: Math.round((r.success || 0) * ease),
         error:   Math.round((r.error   || 0) * ease),
-      })), _activeChartIdx);
+      })));
       if (ease < 1) _chartAnim = requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
@@ -1052,7 +1014,7 @@ async function loadDashQueries() {
           return `<li class="run-flat-item">
             <span class="run-flat-name">${esc(chn(q.channel_name) || '#channel')}</span>
             <span class="tag ${bypass ? 'tag-bypass' : 'tag-auto'}">${bypass ? 'Bypass' : 'Auto'}</span>
-            <span class="cd js-count run-flat-cd" data-active="1" data-compact="1" data-next="${nextOf(q)}"></span>
+            <span class="cd js-count run-flat-cd" data-active="1" data-next="${nextOf(q)}"></span>
           </li>`;
         }).join('')}</ul>`
       : inlineEmpty('Belum ada yang berjalan.', 'Tekan Start di Auto Post atau Bypass.');
@@ -1090,18 +1052,14 @@ async function loadDashLogs() {
 function tickCountdown() {
   const now = Date.now();
   document.querySelectorAll('.js-count').forEach(el => {
-    const compact = el.dataset.compact === '1';
     if (el.dataset.active === '0') {
       const last = el.dataset.last;
-      setText(el, last
-        ? (compact ? `${fmtDur((now - new Date(last)) / 1000)} lalu` : `Terakhir jalan ${fmtDur((now - new Date(last)) / 1000)} lalu`)
-        : (compact ? '—' : 'Belum pernah jalan'));
+      setText(el, last ? `Terakhir jalan ${fmtDur((now - new Date(last)) / 1000)} lalu` : 'Belum pernah jalan');
       return;
     }
     const n = Number(el.dataset.next);
-    if (!n) { setText(el, compact ? '—' : 'Menunggu post pertama'); return; }
+    if (!n) { setText(el, 'Menunggu post pertama'); return; }
     const diff = (n - now) / 1000;
-    if (compact) { setText(el, diff > 0 ? fmtDur(diff) : 'memproses'); return; }
     setText(el, diff > 0 ? `Post berikutnya dalam ${fmtDur(diff)}` : 'Sedang diproses');
   });
 }
