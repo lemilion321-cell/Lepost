@@ -1090,28 +1090,36 @@ async function loadAccounts() {
   }
 }
 
+const _validatedAccIds = new Set();
 async function validateAccountsInBackground() {
-  // Validate tiap akun satu per satu, update UI hanya kalau berhasil
-  for (const acc of state.accounts) {
+  // Hanya validasi akun yang belum pernah divalidasi sesi ini, atau belum punya avatar
+  const toValidate = state.accounts.filter(a => !_validatedAccIds.has(a.id) || !a.dc_avatar);
+  if (!toValidate.length) return;
+
+  for (const acc of toValidate) {
+    _validatedAccIds.add(acc.id);
     try {
       const result = await api(`/accounts/${acc.id}/validate`);
-      // Update data akun di state
       const idx = state.accounts.findIndex(a => a.id === acc.id);
       if (idx !== -1) {
+        const hasDiff = (
+          state.accounts[idx].token_valid !== result.token_valid ||
+          state.accounts[idx].discord_username !== result.discord_username ||
+          state.accounts[idx].dc_id !== result.dc_id ||
+          state.accounts[idx].dc_avatar !== result.dc_avatar
+        );
         state.accounts[idx].token_valid = result.token_valid;
         state.accounts[idx].discord_username = result.discord_username;
         state.accounts[idx].dc_id = result.dc_id;
         state.accounts[idx].dc_avatar = result.dc_avatar;
-        // Re-render list setiap akun selesai validasi
-        renderAccountList();
+        if (hasDiff) renderAccountList(true);
       }
     } catch (e) {
       console.error(`Failed to validate account ${acc.id}:`, e);
-      // Set invalid kalau error
       const idx = state.accounts.findIndex(a => a.id === acc.id);
-      if (idx !== -1) {
+      if (idx !== -1 && state.accounts[idx].token_valid !== false) {
         state.accounts[idx].token_valid = false;
-        renderAccountList();
+        renderAccountList(true);
       }
     }
   }
@@ -1125,26 +1133,24 @@ const statusBadge = (a) => {
   return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.78em;background:rgba(255,255,255,0.07);padding:2px 8px;border-radius:20px"><span style="width:8px;height:8px;border-radius:50%;background:' + colors[s] + ';display:inline-block"></span>' + labels[s] + '</span>' + ko;
 };
 
-function renderAccountList() {
+function renderAccountList(force = false) {
   const box = $('acc-list');
   if (!box) return;
   if (!state.accounts.length) {
     box.innerHTML = '<p class="hint">Belum ada akun. Tambahkan akun pertamamu di bawah.</p>';
+    state.sig['accounts'] = '';
     return;
   }
+  if (!force && !changed('accounts', state.accounts)) return;
   box.innerHTML = state.accounts.map(a => {
     const avatarUrl = a.dc_id && a.dc_avatar
       ? `https://cdn.discordapp.com/avatars/${a.dc_id}/${a.dc_avatar}.png?size=64`
       : null;
     
-    // Render avatar: pakai img dengan data-src, fallback initial tetap visible sampai gambar loaded
-    let avatarContent = '';
-    const initChar = esc((a.discord_username || a.label||'?').charAt(0).toUpperCase());
-    if (avatarUrl) {
-      avatarContent = `<span class="avatar acc-avatar-fallback" aria-hidden="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${initChar}</span><img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" style="opacity:0;transition:opacity 0.2s" onload="this.style.opacity='1';this.previousElementSibling&&(this.previousElementSibling.style.opacity='0')" onerror="this.remove()">`;
-    } else {
-      avatarContent = `<span class="avatar" aria-hidden="true">${initChar}</span>`;
-    }
+    const initChar = esc((a.discord_username || a.label || '?').charAt(0).toUpperCase());
+    const avatarContent = avatarUrl
+      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.onerror=null;this.outerHTML='<span class=\\'avatar\\' aria-hidden=\\'true\\'>${initChar}</span>'">`
+      : `<span class="avatar" aria-hidden="true">${initChar}</span>`;
     const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
     const statusLabels = {online:'Online',idle:'Idle',dnd:'DND',invisible:'Invisible'};
     const s = a.discord_status || 'online';
@@ -1210,6 +1216,7 @@ async function hapusAkun(id) {
   const acc = state.accounts.find(a => a.id === id);
   if (!(await ask('Hapus akun ini?', `${acc ? acc.label : 'Akun'}. Query yang memakai akun ini bisa gagal jalan.`, 'Hapus'))) return;
   try {
+    _validatedAccIds.delete(id);
     await api(`/accounts/${id}`, { method: 'DELETE' });
     await loadAccounts();
     renderAccountList();
@@ -1264,6 +1271,7 @@ async function submitEditToken(e) {
   const btn = e.submitter || e.target.querySelector('[type=submit]');
   setBusy(btn, true);
   try {
+    _validatedAccIds.delete(id);
     await api(`/accounts/${id}`, { method: 'PATCH', body: JSON.stringify({ token }) });
     closeDialog('dlg-edit-token');
     await loadAccounts();

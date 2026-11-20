@@ -1270,7 +1270,7 @@ async def update_rpc(aid: int, inp: RpcIn, user: User = Depends(current_user), d
 
 @router.get("/accounts")
 def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_db)):
-    accs = db.query(Account).filter(Account.owner_id == user.id).all()
+    accs = db.query(Account).filter(Account.owner_id == user.id).order_by(Account.id.asc()).all()
     result = []
     for a in accs:
         # Quick token validation check (non-blocking)

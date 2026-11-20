@@ -927,6 +927,7 @@ button.pill { cursor: pointer; font: inherit; }
   height: 52px;
   border-radius: 50%;
   object-fit: cover;
+  background: rgba(255,255,255,0.06);
 }
 .acc-avatar-wrap .avatar {
   width: 52px;
