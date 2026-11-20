@@ -942,8 +942,8 @@ function drawLineChart(canvas, rows) {
     ctx.restore();
   }
 
-  drawLine(errV, '#ff6b6b', 'rgba(255,107,107,0.18)', 'rgba(255,107,107,0.4)');
-  drawLine(okV,  '#c87a4a', 'rgba(200,122,74,0.22)', 'rgba(200,122,74,0.5)');
+  drawLine(errV, '#f87171', 'rgba(248,113,113,0.15)', 'rgba(248,113,113,0.35)');
+  drawLine(okV,  '#c87a4a', 'rgba(200,122,74,0.20)', 'rgba(200,122,74,0.45)');
 
   // x-labels styled
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
@@ -1012,6 +1012,7 @@ async function loadDashQueries() {
       ? `<ul class="run-flat">${act.map(q => {
           const bypass = q.query_type === 'bypass';
           return `<li class="run-flat-item">
+            <span class="run-dot"></span>
             <span class="run-flat-name">${esc(chn(q.channel_name) || '#channel')}</span>
             <span class="tag ${bypass ? 'tag-bypass' : 'tag-auto'}">${bypass ? 'Bypass' : 'Auto'}</span>
             <span class="cd js-count run-flat-cd" data-active="1" data-next="${nextOf(q)}"></span>
@@ -1340,6 +1341,21 @@ function resetPostForm() {
     if (last.acc) { const a = $('post-acc'); if (a) a.value = last.acc; }
     if (last.delay) { const d = $('post-delay'); if (d) d.value = last.delay; }
     if (last.random) { const r = $('post-delay-random'); if (r) r.value = last.random; }
+    if (last.typing_sim) { const t = $('post-typing-sim'); if (t) t.checked = !!last.typing_sim; }
+    if (last.acc && last.guild) {
+      loadGuilds(last.acc, 'post').then(guilds => {
+        const gSel = $('post-guild');
+        if (gSel && guilds && guilds.some(g => g.id === last.guild)) {
+          gSel.value = last.guild;
+          loadChannels(last.acc, last.guild, 'post').then(() => {
+            if (last.channel) {
+              const cSel = $('post-channel');
+              if (cSel) { cSel.value = last.channel; cSel.dispatchEvent(new Event('change')); }
+            }
+          });
+        }
+      });
+    }
   } catch(e) {}
 }
 

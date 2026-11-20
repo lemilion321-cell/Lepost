@@ -21,17 +21,17 @@
   --flame-soft: rgba(200,122,74,.09);
   --flame-line: rgba(200,122,74,.25);
 
-  --go: #5a9b78;
-  --go-soft: rgba(90,155,120,.09);
-  --go-line: rgba(90,155,120,.28);
+  --go: #4ade80;
+  --go-soft: rgba(74,222,128,.08);
+  --go-line: rgba(74,222,128,.22);
 
-  --stop: #b85c5c;
-  --stop-soft: rgba(184,92,92,.09);
-  --stop-line: rgba(184,92,92,.28);
+  --stop: #f87171;
+  --stop-soft: rgba(248,113,113,.08);
+  --stop-line: rgba(248,113,113,.22);
 
-  --info: #5a7fa0;
-  --info-soft: rgba(90,127,160,.09);
-  --info-line: rgba(90,127,160,.26);
+  --info: #818cf8;
+  --info-soft: rgba(129,140,248,.08);
+  --info-line: rgba(129,140,248,.22);
 
   /* Tightened radius — less bubbly, more intentional */
   --r: 8px;
@@ -348,9 +348,9 @@ img, svg { display: block; }
 .ic-red   { color: var(--stop); }
 .ic-violet { color: var(--info); }
 .stat-num { font-size: 24px; font-weight: 800; letter-spacing: -.02em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--text); }
-.num-green { color: var(--text); }
-.num-red   { color: var(--text); }
-.num-violet { color: var(--text); }
+.num-green { color: var(--go); }
+.num-red   { color: var(--stop); }
+.num-violet { color: var(--info); }
 .stat-lbl { font-size: 11.5px; font-weight: 700; color: var(--text2); margin-top: 1px; text-transform: uppercase; letter-spacing: .04em; }
 .stat .stat-sub { font-size: 11.5px; }
 #card-failed.is-alert { border-color: var(--stop-line); }
@@ -883,13 +883,23 @@ button.pill { cursor: pointer; font: inherit; }
 /* run-flat: daftar berjalan polos sejajar */
 .run-flat { list-style:none; margin:0; padding:0; }
 .run-flat-item {
-  display:flex; align-items:center; gap:8px;
-  padding:8px 0;
-  border-bottom:1px solid var(--border,rgba(255,255,255,.07));
+  display:flex; align-items:center; gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--line-soft,rgba(255,255,255,.06));
 }
 .run-flat-item:last-child { border-bottom:none; }
-.run-flat-name { flex:1; font-size:.875rem; font-weight:500; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.run-flat-cd { font-size:.75rem; color:var(--tx2); white-space:nowrap; }
+.run-dot {
+  flex-shrink:0; width:7px; height:7px; border-radius:50%;
+  background:var(--go,#4ade80);
+  box-shadow:0 0 6px var(--go,#4ade80);
+  animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.55;transform:scale(.8)}
+}
+.run-flat-name { flex:1; font-size:.875rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.run-flat-cd { font-size:.75rem; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
 
 /* log terbaru: max height + scroll */
 #dash-log-list { max-height:260px; overflow-y:auto; }
