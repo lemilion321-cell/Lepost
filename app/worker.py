@@ -323,7 +323,7 @@ async def _post_once(cfg: dict, turn: int) -> bool:
         # Anti-dobel per AKUN: cek apakah akun ini boleh posting ke channel ini
         if not _claim_account_channel(acc_id, cfg["channel_id"], gap):
             _log(qid, "INFO", f"[{acc['label']}] Akun ini baru posting ke #{chan} (slowmode {int(slow)}s). Giliran dilewati biar ga kena 429.")
-            return False
+            return True  # Return True supaya turn naik, bukan stuck di akun yang sama
 
         log.info("Query %s: mencoba kirim ke #%s (slow=%ss)", qid, chan, int(slow))
         res = await dc.send(cfg["channel_id"], txt, cfg["embed"], typing_sim=cfg.get("typing_sim", False))

@@ -1136,10 +1136,15 @@ function renderAccountList() {
     const avatarUrl = a.dc_id && a.dc_avatar
       ? `https://cdn.discordapp.com/avatars/${a.dc_id}/${a.dc_avatar}.png?size=64`
       : null;
-    const avatarHtml = avatarUrl
-      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.remove()">`
-      : '';
-    const avatarFallback = `<span class="avatar" aria-hidden="true" ${avatarUrl ? 'style="display:none"' : ''}>${esc((a.discord_username || a.label||'?').charAt(0).toUpperCase())}</span>`;
+    
+    // Render avatar: kalau ada URL pakai img, kalau tidak pakai fallback initial
+    let avatarContent = '';
+    if (avatarUrl) {
+      avatarContent = `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onload="this.nextElementSibling?.remove()" onerror="this.remove()">
+                       <span class="avatar" aria-hidden="true">${esc((a.discord_username || a.label||'?').charAt(0).toUpperCase())}</span>`;
+    } else {
+      avatarContent = `<span class="avatar" aria-hidden="true">${esc((a.discord_username || a.label||'?').charAt(0).toUpperCase())}</span>`;
+    }
     const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
     const statusLabels = {online:'Online',idle:'Idle',dnd:'DND',invisible:'Invisible'};
     const s = a.discord_status || 'online';
@@ -1160,7 +1165,7 @@ function renderAccountList() {
       </button>
       <div class="acc-card-top">
         <div class="acc-avatar-wrap">
-          ${avatarHtml}${avatarFallback}
+          ${avatarContent}
           <span class="acc-status-dot" style="background:${statusColors[s]}" title="${statusLabels[s]}"></span>
         </div>
         <div class="acc-card-info">
