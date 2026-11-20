@@ -668,7 +668,7 @@ def del_account(aid: int, user: User = Depends(current_user), db: Session = Depe
 class AccountPatch(BaseModel):
     token: Optional[str] = Field(default=None, min_length=10)
     proxy: Optional[str] = None
-    label: Optional[str] = None
+    label: Optional[str] = Field(default=None, min_length=1, max_length=64)
 
 
 @router.patch("/accounts/{aid}")
@@ -1271,8 +1271,21 @@ async def update_rpc(aid: int, inp: RpcIn, user: User = Depends(current_user), d
 @router.get("/accounts")
 def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_db)):
     accs = db.query(Account).filter(Account.owner_id == user.id).all()
-    return [
-        {
+    result = []
+    for a in accs:
+        # Quick token validation check (non-blocking)
+        token_valid = None  # None = unknown, True = valid, False = invalid
+        try:
+            # Cek apakah token terenkripsi dengan benar (basic check)
+            _ = _dec_token(a.token_enc)
+            # Token bisa di-decrypt = format OK, tapi belum tentu valid di Discord
+            # Untuk performance, kita tidak validasi ke Discord API setiap list
+            # User bisa cek manual dengan "Perbarui token"
+            token_valid = True  # Assume valid kalau bisa di-decrypt
+        except Exception:
+            token_valid = False  # Token corrupt atau invalid format
+        
+        result.append({
             "id": a.id,
             "label": a.label,
             "proxy": a.proxy or "",
@@ -1286,6 +1299,45 @@ def list_accounts(user: User = Depends(current_user), db: Session = Depends(get_
             "keep_online": getattr(a, "keep_online", 0) or 0,
             "rpc_json": getattr(a, "rpc_json", "{}") or "{}",
             "avatar": getattr(a, "avatar", "") or "",
-        }
-        for a in accs
-    ]
+            "token_valid": token_valid,  # True/False/None
+        })
+    return result
+
+
+@router.get("/accounts/{aid}/validate")
+async def validate_account(aid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Validasi token akun ke Discord API dan update username + avatar."""
+    acc = _get_account(db, aid, user)
+    token_valid = False
+    error_msg = None
+    
+    try:
+        token = _dec_token(acc.token_enc)
+        async with Discord(token, acc.proxy) as dc:
+            result = await dc.me()
+        
+        if "error" in result:
+            token_valid = False
+            if result["error"] == 401:
+                error_msg = "Token invalid/expired"
+            else:
+                error_msg = f"Discord API error: {result.get('error')}"
+        else:
+            token_valid = True
+            # Update username dan avatar dari Discord
+            acc.discord_username = result.get("username", acc.discord_username)
+            acc.dc_id = str(result.get("id", getattr(acc, "dc_id", "") or ""))
+            acc.dc_avatar = result.get("avatar", "") or ""
+            db.commit()
+    except Exception as e:
+        token_valid = False
+        error_msg = str(e)
+    
+    return {
+        "id": acc.id,
+        "token_valid": token_valid,
+        "discord_username": acc.discord_username or "",
+        "dc_id": getattr(acc, "dc_id", "") or "",
+        "dc_avatar": getattr(acc, "dc_avatar", "") or "",
+        "error": error_msg
+    }

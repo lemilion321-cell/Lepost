@@ -1082,8 +1082,32 @@ async function loadAccounts() {
     }
     renderBypassAccounts();
     clearBg('accounts');
+    
+    // Auto-validate accounts di background (non-blocking)
+    validateAccountsInBackground();
   } catch (e) {
     reportBg('accounts', 'Akun belum bisa dimuat: ' + e.message);
+  }
+}
+
+async function validateAccountsInBackground() {
+  // Validate tiap akun satu per satu, update UI progressively
+  for (const acc of state.accounts) {
+    try {
+      const result = await api(`/accounts/${acc.id}/validate`);
+      // Update data akun di state
+      const idx = state.accounts.findIndex(a => a.id === acc.id);
+      if (idx !== -1) {
+        state.accounts[idx].token_valid = result.token_valid;
+        state.accounts[idx].discord_username = result.discord_username;
+        state.accounts[idx].dc_id = result.dc_id;
+        state.accounts[idx].dc_avatar = result.dc_avatar;
+        // Re-render list setiap akun selesai validasi
+        renderAccountList();
+      }
+    } catch (e) {
+      console.warn(`Failed to validate account ${acc.id}:`, e);
+    }
   }
 }
 
@@ -1109,10 +1133,21 @@ function renderAccountList() {
     const avatarHtml = avatarUrl
       ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
-    const avatarFallback = `<span class="avatar" aria-hidden="true" ${avatarUrl ? 'style="display:none"' : ''}>${esc((a.label||'?').charAt(0).toUpperCase())}</span>`;
+    const avatarFallback = `<span class="avatar" aria-hidden="true" ${avatarUrl ? 'style="display:none"' : ''}>${esc((a.discord_username || a.label||'?').charAt(0).toUpperCase())}</span>`;
     const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
     const statusLabels = {online:'Online',idle:'Idle',dnd:'DND',invisible:'Invisible'};
     const s = a.discord_status || 'online';
+    
+    // Token status badge
+    let tokenBadge = '';
+    if (a.token_valid === true) {
+      tokenBadge = '<span class="badge badge-ok">TOKEN VALID</span>';
+    } else if (a.token_valid === false) {
+      tokenBadge = '<span class="badge badge-danger">TOKEN INVALID</span>';
+    } else {
+      tokenBadge = '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">TOKEN UNKNOWN</span>';
+    }
+    
     return `
     <div class="acc-card">
       <div class="acc-card-top">
@@ -1122,16 +1157,17 @@ function renderAccountList() {
         </div>
         <div class="acc-card-info">
           <div class="acc-card-name">${esc(a.label)}</div>
-          <div class="acc-card-user">@${esc(a.dc_user || a.discord_username || '?')}</div>
+          <div class="acc-card-user">@${esc(a.discord_username || '?')}</div>
           <div class="acc-card-badges">
-            <span class="badge badge-ok">Token aktif</span>
+            ${tokenBadge}
             <span class="badge" style="background:${statusColors[s]}22;color:${statusColors[s]};border:1px solid ${statusColors[s]}55">${statusLabels[s]}</span>
             ${a.keep_online ? '<span class="badge badge-ok">Online 24/7</span>' : ''}
             ${a.proxy ? '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">Proxy</span>' : ''}
           </div>
         </div>
       </div>
-      <div class="acc-card-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr 36px;gap:6px;align-items:center">
+      <div class="acc-card-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 36px;gap:6px;align-items:center">
+        <button type="button" class="btn btn-sm" data-act="edit-label" data-id="${a.id}" data-label="${esc(a.label)}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Nama</button>
         <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">Atur status</button>
         <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}">Webhook</button>
         <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M12 11l8-8m-3 0l2 2m-4 1l2 2"/></svg> Perbarui token</button>
@@ -1167,6 +1203,17 @@ async function hapusAkun(id) {
     renderAccountList();
     loadStats();
     toast('Akun dihapus.');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function editLabel(id, currentLabel) {
+  const newLabel = prompt('Edit nama akun:', currentLabel);
+  if (!newLabel || newLabel === currentLabel) return;
+  try {
+    await api(`/accounts/${id}`, { method: 'PATCH', body: JSON.stringify({ label: newLabel }) });
+    await loadAccounts();
+    renderAccountList();
+    toast('Nama akun berhasil diubah.');
   } catch (e) { toast(e.message, true); }
 }
 
@@ -1913,6 +1960,7 @@ document.addEventListener('click', e => {
     case 'new-bypass':       return openBypass(el);
     case 'open-acc':         return openAccounts(el);
     case 'del-acc':          return hapusAkun(id);
+    case 'edit-label':       return editLabel(id, el.dataset.label);
     case 'open-status': {
       const acc = state.accounts.find(a => a.id === parseInt(el.dataset.id));
       if (acc) openStatusDialog(acc);
