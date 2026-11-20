@@ -1083,7 +1083,7 @@ async function loadAccounts() {
     renderBypassAccounts();
     clearBg('accounts');
     
-    // Auto-validate accounts di background (non-blocking)
+    // Auto-validate accounts di background (silent, tidak render saat validating)
     validateAccountsInBackground();
   } catch (e) {
     reportBg('accounts', 'Akun belum bisa dimuat: ' + e.message);
@@ -1091,18 +1091,12 @@ async function loadAccounts() {
 }
 
 async function validateAccountsInBackground() {
-  // Validate tiap akun satu per satu, update UI progressively
+  // Validate tiap akun satu per satu, update UI hanya kalau berhasil
   for (const acc of state.accounts) {
-    // Set status validating
-    const idx = state.accounts.findIndex(a => a.id === acc.id);
-    if (idx !== -1) {
-      state.accounts[idx].token_valid = null; // Show "validating..."
-      renderAccountList();
-    }
-    
     try {
       const result = await api(`/accounts/${acc.id}/validate`);
       // Update data akun di state
+      const idx = state.accounts.findIndex(a => a.id === acc.id);
       if (idx !== -1) {
         state.accounts[idx].token_valid = result.token_valid;
         state.accounts[idx].discord_username = result.discord_username;
@@ -1113,7 +1107,8 @@ async function validateAccountsInBackground() {
       }
     } catch (e) {
       console.error(`Failed to validate account ${acc.id}:`, e);
-      // Tetap render dengan error state
+      // Set invalid kalau error
+      const idx = state.accounts.findIndex(a => a.id === acc.id);
       if (idx !== -1) {
         state.accounts[idx].token_valid = false;
         renderAccountList();
@@ -1142,7 +1137,7 @@ function renderAccountList() {
       ? `https://cdn.discordapp.com/avatars/${a.dc_id}/${a.dc_avatar}.png?size=64`
       : null;
     const avatarHtml = avatarUrl
-      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.remove()">`
       : '';
     const avatarFallback = `<span class="avatar" aria-hidden="true" ${avatarUrl ? 'style="display:none"' : ''}>${esc((a.discord_username || a.label||'?').charAt(0).toUpperCase())}</span>`;
     const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
@@ -1155,9 +1150,8 @@ function renderAccountList() {
       tokenBadge = '<span class="badge badge-ok">TOKEN VALID</span>';
     } else if (a.token_valid === false) {
       tokenBadge = '<span class="badge badge-danger">TOKEN INVALID</span>';
-    } else {
-      tokenBadge = '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">VALIDATING...</span>';
     }
+    // Skip badge kalau null (sedang validating di background)
     
     return `
     <div class="acc-card" style="position:relative">
@@ -1220,14 +1214,29 @@ async function hapusAkun(id) {
 }
 
 async function editLabel(id, currentLabel) {
-  const newLabel = prompt('Edit nama akun:', currentLabel);
-  if (!newLabel || newLabel === currentLabel) return;
+  const dlg = $('dlg-edit-label');
+  if (!dlg) return;
+  $('edit-label-input').value = currentLabel;
+  dlg.dataset.accId = id;
+  openDialog('dlg-edit-label');
+}
+
+async function submitEditLabel(e) {
+  e.preventDefault();
+  const dlg = $('dlg-edit-label');
+  const id = Number(dlg?.dataset.accId);
+  const newLabel = $('edit-label-input')?.value.trim();
+  if (!newLabel) return toast('Nama akun wajib diisi.', true);
+  const btn = e.submitter || e.target.querySelector('[type=submit]');
+  setBusy(btn, true);
   try {
     await api(`/accounts/${id}`, { method: 'PATCH', body: JSON.stringify({ label: newLabel }) });
+    closeDialog('dlg-edit-label');
     await loadAccounts();
     renderAccountList();
     toast('Nama akun berhasil diubah.');
-  } catch (e) { toast(e.message, true); }
+  } catch (err) { toast(err.message, true); }
+  finally { setBusy(btn, false); }
 }
 
 function openEditToken(id, label, opener) {
@@ -2007,6 +2016,7 @@ $('form-post')?.addEventListener('submit', submitPost);
 $('form-bypass')?.addEventListener('submit', submitBypass);
 $('form-acc')?.addEventListener('submit', submitAccount);
 $('form-edit-token')?.addEventListener('submit', submitEditToken);
+$('form-edit-label')?.addEventListener('submit', submitEditLabel);
 $('post-acc')?.addEventListener('change', e => loadGuilds(e.target.value, 'post'));
 $('post-guild')?.addEventListener('change', e => loadChannels($('post-acc').value, e.target.value, 'post'));
 $('bypass-guild')?.addEventListener('change', e => loadChannels(state.bypassRef, e.target.value, 'bypass'));
