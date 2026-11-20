@@ -1093,10 +1093,16 @@ async function loadAccounts() {
 async function validateAccountsInBackground() {
   // Validate tiap akun satu per satu, update UI progressively
   for (const acc of state.accounts) {
+    // Set status validating
+    const idx = state.accounts.findIndex(a => a.id === acc.id);
+    if (idx !== -1) {
+      state.accounts[idx].token_valid = null; // Show "validating..."
+      renderAccountList();
+    }
+    
     try {
       const result = await api(`/accounts/${acc.id}/validate`);
       // Update data akun di state
-      const idx = state.accounts.findIndex(a => a.id === acc.id);
       if (idx !== -1) {
         state.accounts[idx].token_valid = result.token_valid;
         state.accounts[idx].discord_username = result.discord_username;
@@ -1106,7 +1112,12 @@ async function validateAccountsInBackground() {
         renderAccountList();
       }
     } catch (e) {
-      console.warn(`Failed to validate account ${acc.id}:`, e);
+      console.error(`Failed to validate account ${acc.id}:`, e);
+      // Tetap render dengan error state
+      if (idx !== -1) {
+        state.accounts[idx].token_valid = false;
+        renderAccountList();
+      }
     }
   }
 }
@@ -1145,11 +1156,14 @@ function renderAccountList() {
     } else if (a.token_valid === false) {
       tokenBadge = '<span class="badge badge-danger">TOKEN INVALID</span>';
     } else {
-      tokenBadge = '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">TOKEN UNKNOWN</span>';
+      tokenBadge = '<span class="badge" style="background:rgba(255,255,255,0.08);color:#ccc">VALIDATING...</span>';
     }
     
     return `
-    <div class="acc-card">
+    <div class="acc-card" style="position:relative">
+      <button type="button" class="btn btn-icon btn-sm" style="position:absolute;top:8px;right:8px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;z-index:10" data-act="edit-label" data-id="${a.id}" data-label="${esc(a.label)}" aria-label="Edit nama ${esc(a.label)}">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
       <div class="acc-card-top">
         <div class="acc-avatar-wrap">
           ${avatarHtml}${avatarFallback}
@@ -1166,8 +1180,7 @@ function renderAccountList() {
           </div>
         </div>
       </div>
-      <div class="acc-card-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 36px;gap:6px;align-items:center">
-        <button type="button" class="btn btn-sm" data-act="edit-label" data-id="${a.id}" data-label="${esc(a.label)}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Nama</button>
+      <div class="acc-card-actions" style="display:grid;grid-template-columns:1fr 1fr 1fr 36px;gap:6px;align-items:center">
         <button type="button" class="btn btn-sm" data-act="open-status" data-id="${a.id}">Atur status</button>
         <button type="button" class="btn btn-sm" data-act="open-webhook" data-id="${a.id}" data-label="${esc(a.label)}">Webhook</button>
         <button type="button" class="btn btn-sm" data-act="edit-token" data-id="${a.id}" data-label="${esc(a.label)}"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M12 11l8-8m-3 0l2 2m-4 1l2 2"/></svg> Perbarui token</button>
