@@ -851,7 +851,7 @@ function drawActivityChart(canvas, rows, activeIdx = -1) {
 
   const labels = safeRows.map(r => dayLabel(r && r.date ? r.date : ''));
 
-  const PAD = { top: 26, right: 14, bottom: 28, left: 32 };
+  const PAD = { top: 28, right: 12, bottom: 30, left: 30 };
   const cW = W - PAD.left - PAD.right;
   const cH = H - PAD.top - PAD.bottom;
   if (cW <= 0 || cH <= 0) return;
@@ -865,11 +865,11 @@ function drawActivityChart(canvas, rows, activeIdx = -1) {
 
   // Horizontal grid lines (0, 0.5, 1)
   const steps = [0, 0.5, 1];
-  ctx.setLineDash([3, 4]);
   steps.forEach(t => {
-    const y = Math.round(PAD.top + cH * (1 - t));
-    ctx.strokeStyle = t === 0 ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)';
+    const y = Math.round(PAD.top + cH * (1 - t)) + 0.5;
+    ctx.strokeStyle = t === 0 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.045)';
     ctx.lineWidth = 1;
+    ctx.setLineDash(t === 0 ? [] : [3, 5]);
     ctx.beginPath();
     ctx.moveTo(PAD.left, y);
     ctx.lineTo(PAD.left + cW, y);
@@ -877,10 +877,10 @@ function drawActivityChart(canvas, rows, activeIdx = -1) {
 
     // Y labels
     const v = Math.round(maxVal * t);
-    ctx.fillStyle = 'rgba(255,255,255,0.38)';
-    ctx.font = '500 10px Inter,system-ui,sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.32)';
+    ctx.font = '500 9.5px Inter,system-ui,sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText(v, PAD.left - 6, y + 3.5);
+    ctx.fillText(v, PAD.left - 7, y + 3);
   });
   ctx.setLineDash([]);
 
@@ -945,9 +945,9 @@ function drawActivityChart(canvas, rows, activeIdx = -1) {
     }
 
     // Sukses: Emerald Green
-    drawPill(okX, okH, '#22c55e', '#15803d');
+    drawPill(okX, okH, '#34d399', '#15803d');
     // Gagal: Coral Red
-    drawPill(errX, errH, '#f87171', '#dc2626');
+    drawPill(errX, errH, '#fb7185', '#dc2626');
 
     // Numbers above bars
     ctx.font = '600 9.5px Inter,system-ui,sans-serif';
@@ -1035,7 +1035,7 @@ async function loadActivity() {
       box.innerHTML = '<p class="chart-empty">Belum ada aktivitas dalam 7 hari terakhir.</p>';
       return;
     }
-    box.innerHTML = '<canvas id="chart-canvas" style="width:100%;height:180px;display:block;cursor:pointer"></canvas>';
+    box.innerHTML = '<canvas id="chart-canvas" style="width:100%;height:212px;display:block;cursor:pointer;touch-action:manipulation"></canvas>';
     const canvas = $('chart-canvas');
     if (!canvas) return;
 
