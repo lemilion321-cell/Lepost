@@ -2095,7 +2095,6 @@ document.querySelectorAll('[data-atab]').forEach(b =>
   b.addEventListener('click', () => setAdminTab(b.dataset.atab)));
 $('form-post')?.addEventListener('submit', submitPost);
 $('form-bypass')?.addEventListener('submit', submitBypass);
-$('form-acc')?.addEventListener('submit', submitAccount);
 $('form-acc-dlg')?.addEventListener('submit', submitAccount);
 setupTokenCheck();
 $('form-edit-token')?.addEventListener('submit', submitEditToken);

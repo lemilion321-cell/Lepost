@@ -295,13 +295,6 @@
         <button type="button" class="btn btn-primary btn-sm" id="btn-show-add-acc" onclick="openDialog('dlg-add-acc')">+ Tambah Akun</button>
       </div>
       <div id="acc-list" class="acc-list"></div>
-      <form id="form-acc" class="acc-form" hidden>
-        <h3 style="margin-top:0">Tambah akun baru</h3>
-        <div class="field"><label class="label" for="acc-label">Nama akun</label><input id="acc-label" class="input" autocomplete="off" placeholder="Contoh: akun utama"></div>
-        <div class="field"><label class="label" for="acc-token">Discord token</label><input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun"></div>
-        <div class="field"><label class="label" for="acc-proxy">Proxy (opsional)</label><input id="acc-proxy" class="input" autocomplete="off" placeholder="socks5://user:pass@host:port"></div>
-        <button type="submit" class="btn btn-primary btn-block">Simpan Akun</button>
-      </form>
     </section>
     <section data-view="rpc" aria-labelledby="rpc-title" hidden>
       <div class="page-head"><h1 id="rpc-title" class="page-title">Custom RPC</h1></div>
@@ -541,7 +534,7 @@
   <span id="toast-msg"></span>
 </div>
 
-<script src="/static/app.js?v=25"></script>
+<script src="/static/app.js?v=26"></script>
 
   <!-- Modal Tambah Akun -->
   <div id="dlg-add-acc" class="dialog-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="dlg-add-acc-title">
