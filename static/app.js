@@ -1012,6 +1012,7 @@ async function loadDashQueries() {
       ? `<ul class="run-flat">${act.map(q => {
           const bypass = q.query_type === 'bypass';
           return `<li class="run-flat-item">
+            <span class="run-dot"></span>
             <span class="run-flat-name">${esc(chn(q.channel_name) || '#channel')}</span>
             <span class="tag ${bypass ? 'tag-bypass' : 'tag-auto'}">${bypass ? 'Bypass' : 'Auto'}</span>
             <span class="cd js-count run-flat-cd" data-active="1" data-next="${nextOf(q)}"></span>
@@ -1141,6 +1142,24 @@ function renderAccountList(force = false) {
     state.sig['accounts'] = '';
     return;
   }
+  // Auto-sync akun lama yang belum punya dc_id/dc_avatar
+  state.accounts.filter(a => !a.dc_id || !a.dc_avatar).forEach(a => {
+    api(`/accounts/${a.id}/sync-profile`, { method: 'POST' })
+      .then(res => {
+        a.dc_id = res.dc_id;
+        a.dc_avatar = res.dc_avatar;
+        a.discord_username = res.discord_username;
+        // Update avatar img langsung di DOM
+        const img = document.querySelector(`.acc-avatar-img[data-acc="${a.id}"]`);
+        if (img && res.dc_id && res.dc_avatar) {
+          img.src = `https://cdn.discordapp.com/avatars/${res.dc_id}/${res.dc_avatar}.png?size=64`;
+          img.style.display = '';
+          const fb = img.nextElementSibling;
+          if (fb) fb.style.display = 'none';
+        }
+      }).catch(() => {});
+  });
+
   if (!force && !changed('accounts', state.accounts)) return;
   box.innerHTML = state.accounts.map(a => {
     const avatarUrl = a.dc_id && a.dc_avatar
@@ -1149,7 +1168,7 @@ function renderAccountList(force = false) {
     
     const initChar = esc((a.discord_username || a.label || '?').charAt(0).toUpperCase());
     const avatarContent = avatarUrl
-      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.onerror=null;this.outerHTML='<span class=\\'avatar\\' aria-hidden=\\'true\\'>${initChar}</span>'">`
+      ? `<img src="${avatarUrl}" class="acc-avatar-img" data-acc="${a.id}" alt="${esc(a.label)}" onerror="this.onerror=null;this.outerHTML='<span class=\\'avatar\\' aria-hidden=\\'true\\'>${initChar}</span>'">`
       : `<span class="avatar" aria-hidden="true">${initChar}</span>`;
     const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};
     const statusLabels = {online:'Online',idle:'Idle',dnd:'DND',invisible:'Invisible'};
@@ -1285,6 +1304,36 @@ function openAccounts(opener) {
   location.hash = '#accounts';
 }
 
+let _tokenCheckTimer = null;
+function setupTokenCheck() {
+  const inp = $('acc-token');
+  const status = $('acc-token-status');
+  if (!inp || !status) return;
+  inp.addEventListener('input', () => {
+    clearTimeout(_tokenCheckTimer);
+    const token = inp.value.trim();
+    if (!token || token.length < 20) { status.textContent = ''; return; }
+    status.style.color = 'var(--muted)';
+    status.textContent = 'Mengecek token...';
+    _tokenCheckTimer = setTimeout(async () => {
+      try {
+        const proxy = $('acc-proxy')?.value.trim() || '';
+        const res = await api('/accounts/check-token', { method: 'POST', body: JSON.stringify({ token, proxy }) });
+        if (res.valid) {
+          status.style.color = 'var(--go)';
+          status.textContent = `✓ Valid — @${res.username}`;
+        } else {
+          status.style.color = 'var(--stop)';
+          status.textContent = `✗ ${res.message}`;
+        }
+      } catch (e) {
+        status.style.color = 'var(--stop)';
+        status.textContent = `✗ ${e.message}`;
+      }
+    }, 800);
+  });
+}
+
 async function submitAccount(e) {
   e.preventDefault();
   const label = $('acc-label').value.trim();
@@ -1296,6 +1345,8 @@ async function submitAccount(e) {
   try {
     await api('/accounts', { method: 'POST', body: JSON.stringify({ label, token, proxy }) });
     e.target.reset();
+    const status = $('acc-token-status');
+    if (status) status.textContent = '';
     closeDialog('dlg-add-acc');
     await loadAccounts();
     renderAccountList();
@@ -1424,6 +1475,21 @@ function resetPostForm() {
     if (last.acc) { const a = $('post-acc'); if (a) a.value = last.acc; }
     if (last.delay) { const d = $('post-delay'); if (d) d.value = last.delay; }
     if (last.random) { const r = $('post-delay-random'); if (r) r.value = last.random; }
+    if (last.typing_sim) { const t = $('post-typing-sim'); if (t) t.checked = !!last.typing_sim; }
+    if (last.acc && last.guild) {
+      loadGuilds(last.acc, 'post').then(guilds => {
+        const gSel = $('post-guild');
+        if (gSel && guilds && guilds.some(g => g.id === last.guild)) {
+          gSel.value = last.guild;
+          loadChannels(last.acc, last.guild, 'post').then(() => {
+            if (last.channel) {
+              const cSel = $('post-channel');
+              if (cSel) { cSel.value = last.channel; cSel.dispatchEvent(new Event('change')); }
+            }
+          });
+        }
+      });
+    }
   } catch(e) {}
 }
 
@@ -2030,6 +2096,8 @@ document.querySelectorAll('[data-atab]').forEach(b =>
 $('form-post')?.addEventListener('submit', submitPost);
 $('form-bypass')?.addEventListener('submit', submitBypass);
 $('form-acc')?.addEventListener('submit', submitAccount);
+$('form-acc-dlg')?.addEventListener('submit', submitAccount);
+setupTokenCheck();
 $('form-edit-token')?.addEventListener('submit', submitEditToken);
 $('form-edit-label')?.addEventListener('submit', submitEditLabel);
 $('post-acc')?.addEventListener('change', e => loadGuilds(e.target.value, 'post'));

@@ -616,6 +616,23 @@ def get_logs(limit: int = 50, user: User = Depends(current_user), db: Session = 
 
 
 # ─────────────────────────── accounts ───────────────────────────
+class TokenCheckIn(BaseModel):
+    token: str
+    proxy: str = ""
+
+@router.post("/accounts/check-token")
+async def check_token(data: TokenCheckIn, user: User = Depends(current_user)):
+    token, proxy = data.token.strip(), data.proxy.strip()
+    if not token:
+        raise HTTPException(400, "Token kosong")
+    async with Discord(token, proxy) as dc:
+        result = await dc.me()
+    if "error" in result:
+        if result["error"] == 401:
+            return {"valid": False, "message": "Token tidak valid / sudah mati"}
+        return {"valid": False, "message": result.get("message", "Gagal konek Discord")}
+    return {"valid": True, "username": result.get("username", ""), "id": result.get("id", "")}
+
 @router.post("/accounts")
 async def add_account(data: AccountIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     token, proxy = data.token.strip(), data.proxy.strip()
@@ -705,6 +722,20 @@ async def patch_account(aid: int, data: AccountPatch, user: User = Depends(curre
     db.commit()
     return {"id": acc.id, "label": acc.label, "dc_user": acc.discord_username, "proxy": bool(acc.proxy)}
 
+
+@router.post("/accounts/{aid}/sync-profile")
+async def sync_account_profile(aid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Refresh dc_id, dc_avatar, discord_username dari Discord API untuk akun lama yang belum punya data ini."""
+    acc = _get_account(db, aid, user)
+    async with Discord(_dec_token(acc.token_enc), acc.proxy) as dc:
+        result = await dc.me()
+    if "error" in result:
+        raise HTTPException(400, result.get("message", "Gagal konek Discord"))
+    acc.discord_username = result.get("username", acc.discord_username)
+    acc.dc_id = str(result.get("id", "") or "")
+    acc.dc_avatar = result.get("avatar", "") or ""
+    db.commit()
+    return {"dc_id": acc.dc_id, "dc_avatar": acc.dc_avatar, "discord_username": acc.discord_username}
 
 @router.get("/fetch/guilds/{account_id}")
 async def fetch_guilds(account_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):

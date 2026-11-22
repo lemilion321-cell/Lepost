@@ -888,6 +888,16 @@ button.pill { cursor: pointer; font: inherit; }
   border-bottom:1px solid var(--border,rgba(255,255,255,.07));
 }
 .run-flat-item:last-child { border-bottom:none; }
+.run-dot {
+  flex-shrink:0; width:7px; height:7px; border-radius:50%;
+  background:var(--go);
+  box-shadow:0 0 5px var(--go);
+  animation:pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.55;transform:scale(.8)}
+}
 .run-flat-name { flex:1; font-size:.875rem; font-weight:500; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .run-flat-cd { font-size:.75rem; color:var(--tx2); white-space:nowrap; }
 
