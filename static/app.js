@@ -942,8 +942,8 @@ function drawLineChart(canvas, rows) {
     ctx.restore();
   }
 
-  drawLine(errV, '#f87171', 'rgba(248,113,113,0.15)', 'rgba(248,113,113,0.35)');
-  drawLine(okV,  '#c87a4a', 'rgba(200,122,74,0.20)', 'rgba(200,122,74,0.45)');
+  drawLine(errV, '#ff6b6b', 'rgba(255,107,107,0.18)', 'rgba(255,107,107,0.4)');
+  drawLine(okV,  '#c87a4a', 'rgba(200,122,74,0.22)', 'rgba(200,122,74,0.5)');
 
   // x-labels styled
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
@@ -1103,12 +1103,29 @@ function renderAccountList() {
     box.innerHTML = '<p class="hint">Belum ada akun. Tambahkan akun pertamamu di bawah.</p>';
     return;
   }
+  // Auto-sync akun lama yang belum punya dc_id/dc_avatar
+  state.accounts.filter(a => !a.dc_id || !a.dc_avatar).forEach(a => {
+    api(`/accounts/${a.id}/sync-profile`, { method: 'POST' })
+      .then(res => {
+        a.dc_id = res.dc_id;
+        a.dc_avatar = res.dc_avatar;
+        a.discord_username = res.discord_username;
+        // Update avatar img langsung di DOM
+        const img = document.querySelector(`.acc-avatar-img[data-acc="${a.id}"]`);
+        if (img && res.dc_id && res.dc_avatar) {
+          img.src = `https://cdn.discordapp.com/avatars/${res.dc_id}/${res.dc_avatar}.png?size=64`;
+          img.style.display = '';
+          const fb = img.nextElementSibling;
+          if (fb) fb.style.display = 'none';
+        }
+      }).catch(() => {});
+  });
   box.innerHTML = state.accounts.map(a => {
     const avatarUrl = a.dc_id && a.dc_avatar
       ? `https://cdn.discordapp.com/avatars/${a.dc_id}/${a.dc_avatar}.png?size=64`
       : null;
     const avatarHtml = avatarUrl
-      ? `<img src="${avatarUrl}" class="acc-avatar-img" alt="${esc(a.label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      ? `<img src="${avatarUrl}" class="acc-avatar-img" data-acc="${a.id}" alt="${esc(a.label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
       : '';
     const avatarFallback = `<span class="avatar" aria-hidden="true" ${avatarUrl ? 'style="display:none"' : ''}>${esc((a.label||'?').charAt(0).toUpperCase())}</span>`;
     const statusColors = {online:'#23a55a',idle:'#f0b232',dnd:'#f23f43',invisible:'#80848e'};

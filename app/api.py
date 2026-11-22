@@ -714,6 +714,20 @@ async def patch_account(aid: int, data: AccountPatch, user: User = Depends(curre
     return {"id": acc.id, "label": acc.label, "dc_user": acc.discord_username, "proxy": bool(acc.proxy)}
 
 
+@router.post("/accounts/{aid}/sync-profile")
+async def sync_account_profile(aid: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Refresh dc_id, dc_avatar, discord_username dari Discord API untuk akun lama yang belum punya data ini."""
+    acc = _get_account(db, aid, user)
+    async with Discord(_dec_token(acc.token_enc), acc.proxy) as dc:
+        result = await dc.me()
+    if "error" in result:
+        raise HTTPException(400, result.get("message", "Gagal konek Discord"))
+    acc.discord_username = result.get("username", acc.discord_username)
+    acc.dc_id = str(result.get("id", "") or "")
+    acc.dc_avatar = result.get("avatar", "") or ""
+    db.commit()
+    return {"dc_id": acc.dc_id, "dc_avatar": acc.dc_avatar, "discord_username": acc.discord_username}
+
 @router.get("/fetch/guilds/{account_id}")
 async def fetch_guilds(account_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
     acc = _get_account(db, account_id, user)
