@@ -1202,6 +1202,36 @@ function openAccounts(opener) {
   location.hash = '#accounts';
 }
 
+let _tokenCheckTimer = null;
+function setupTokenCheck() {
+  const inp = $('acc-token');
+  const status = $('acc-token-status');
+  if (!inp || !status) return;
+  inp.addEventListener('input', () => {
+    clearTimeout(_tokenCheckTimer);
+    const token = inp.value.trim();
+    if (!token || token.length < 20) { status.textContent = ''; return; }
+    status.style.color = 'var(--muted)';
+    status.textContent = 'Mengecek token...';
+    _tokenCheckTimer = setTimeout(async () => {
+      try {
+        const proxy = $('acc-proxy')?.value.trim() || '';
+        const res = await api('/accounts/check-token', { method: 'POST', body: JSON.stringify({ token, proxy }) });
+        if (res.valid) {
+          status.style.color = 'var(--go)';
+          status.textContent = `✓ Valid — @${res.username}`;
+        } else {
+          status.style.color = 'var(--stop)';
+          status.textContent = `✗ ${res.message}`;
+        }
+      } catch (e) {
+        status.style.color = 'var(--stop)';
+        status.textContent = `✗ ${e.message}`;
+      }
+    }, 800);
+  });
+}
+
 async function submitAccount(e) {
   e.preventDefault();
   const label = $('acc-label').value.trim();
@@ -1213,6 +1243,8 @@ async function submitAccount(e) {
   try {
     await api('/accounts', { method: 'POST', body: JSON.stringify({ label, token, proxy }) });
     e.target.reset();
+    const status = $('acc-token-status');
+    if (status) status.textContent = '';
     closeDialog('dlg-add-acc');
     await loadAccounts();
     renderAccountList();
@@ -1963,6 +1995,8 @@ document.querySelectorAll('[data-atab]').forEach(b =>
 $('form-post')?.addEventListener('submit', submitPost);
 $('form-bypass')?.addEventListener('submit', submitBypass);
 $('form-acc')?.addEventListener('submit', submitAccount);
+$('form-acc-dlg')?.addEventListener('submit', submitAccount);
+setupTokenCheck();
 $('form-edit-token')?.addEventListener('submit', submitEditToken);
 $('post-acc')?.addEventListener('change', e => loadGuilds(e.target.value, 'post'));
 $('post-guild')?.addEventListener('change', e => loadChannels($('post-acc').value, e.target.value, 'post'));

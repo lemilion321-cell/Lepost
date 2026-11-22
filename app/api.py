@@ -616,6 +616,23 @@ def get_logs(limit: int = 50, user: User = Depends(current_user), db: Session = 
 
 
 # ─────────────────────────── accounts ───────────────────────────
+class TokenCheckIn(BaseModel):
+    token: str
+    proxy: str = ""
+
+@router.post("/accounts/check-token")
+async def check_token(data: TokenCheckIn, user: User = Depends(current_user)):
+    token, proxy = data.token.strip(), data.proxy.strip()
+    if not token:
+        raise HTTPException(400, "Token kosong")
+    async with Discord(token, proxy) as dc:
+        result = await dc.me()
+    if "error" in result:
+        if result["error"] == 401:
+            return {"valid": False, "message": "Token tidak valid / sudah mati"}
+        return {"valid": False, "message": result.get("message", "Gagal konek Discord")}
+    return {"valid": True, "username": result.get("username", ""), "id": result.get("id", "")}
+
 @router.post("/accounts")
 async def add_account(data: AccountIn, user: User = Depends(current_user), db: Session = Depends(get_db)):
     token, proxy = data.token.strip(), data.proxy.strip()

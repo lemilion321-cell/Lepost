@@ -529,7 +529,7 @@
   <span id="toast-msg"></span>
 </div>
 
-<script src="/static/app.js?v=23"></script>
+<script src="/static/app.js?v=24"></script>
 
   <!-- Modal Tambah Akun -->
   <div id="dlg-add-acc" class="dialog-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="dlg-add-acc-title">
@@ -538,9 +538,13 @@
         <h2 id="dlg-add-acc-title" style="margin:0;font-size:1.1rem">Tambah Akun Discord</h2>
         <button type="button" class="btn btn-icon btn-sm" onclick="closeDialog('dlg-add-acc')" aria-label="Tutup">✕</button>
       </div>
-      <form id="form-acc">
+      <form id="form-acc-dlg">
         <div class="field"><label class="label" for="acc-label">Nama akun</label><input id="acc-label" class="input" autocomplete="off" placeholder="Contoh: akun utama"></div>
-        <div class="field"><label class="label" for="acc-token">Discord token</label><input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun"></div>
+        <div class="field">
+          <label class="label" for="acc-token">Discord token</label>
+          <input id="acc-token" class="input" type="password" autocomplete="off" placeholder="Token akun">
+          <p id="acc-token-status" style="font-size:12px;margin-top:4px;min-height:16px"></p>
+        </div>
         <div class="field"><label class="label" for="acc-proxy">Proxy (opsional)</label><input id="acc-proxy" class="input" autocomplete="off" placeholder="socks5://user:pass@host:port"></div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button type="button" class="btn btn-block" onclick="closeDialog('dlg-add-acc')">Batal</button>
