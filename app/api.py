@@ -1264,9 +1264,9 @@ async def update_presence(aid: int, inp: PresenceIn, user: User = Depends(curren
     acc.discord_custom_emoji = inp.discord_custom_emoji
     acc.keep_online = inp.keep_online
     db.commit()
-    # Kirim custom status via REST API supaya persisten (bukan gateway yang mati beberapa detik)
+    # Kirim status + custom status via REST API supaya persisten (bukan gateway yang mati beberapa detik)
     async with Discord(_dec_token(acc.token_enc), acc.proxy) as dc:
-        await dc.set_custom_status(inp.discord_custom_text, inp.discord_custom_emoji)
+        await dc.set_custom_status(inp.discord_custom_text, inp.discord_custom_emoji, inp.discord_status)
     from app.worker import restart_gateway, stop_gateway
     if inp.keep_online:
         await restart_gateway(aid)
