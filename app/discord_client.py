@@ -126,7 +126,7 @@ class Discord:
         """Kirim sinyal 'sedang mengetik...' ke channel. Berlaku 10 detik di Discord."""
         await self._req("POST", f"/channels/{ch}/typing")
 
-    async def send(self, ch: str, content: str, embed: Optional[dict] = None, react: str = "", typing_sim: bool = False):
+    async def send(self, ch: str, content: str, embed: Optional[dict] = None, react: str = "", typing_sim: bool = True):
         payload: dict = {}
         if content:
             payload["content"] = content
@@ -144,10 +144,9 @@ class Discord:
         if not payload:
             return {"error": "EMPTY", "message": "Pesan kosong (isi teks atau embed)", "body": ""}
 
-        # Typing simulation: kirim sinyal mengetik, lalu delay sesuai panjang teks
-        if typing_sim and content:
-            # ~50 karakter/detik, min 1.5s, max 10s
-            typing_delay = min(max(len(content) / 50.0, 1.5), 10.0)
+        # Typing simulation: selalu aktif, durasi 3-10 detik sesuai panjang teks
+        if content:
+            typing_delay = min(max(len(content) / 50.0, 3.0), 10.0)
             await self._req("POST", f"/channels/{ch}/typing")
             await asyncio.sleep(typing_delay)
 
