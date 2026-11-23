@@ -101,6 +101,15 @@ class Discord:
     async def me(self):
         return await self._req("GET", "/users/@me")
 
+    async def set_custom_status(self, text: str = "", emoji: str = ""):
+        """Simpan custom status permanen via user settings (persisten walau gateway disconnect)."""
+        payload = {"custom_status": None}
+        if text or emoji:
+            payload["custom_status"] = {"text": text or None}
+            if emoji:
+                payload["custom_status"]["emoji_name"] = emoji
+        return await self._req("PATCH", "/users/@me/settings", json=payload)
+
     async def get_guilds(self):
         return await self._req("GET", "/users/@me/guilds")
 
