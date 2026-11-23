@@ -1264,11 +1264,13 @@ async def update_presence(aid: int, inp: PresenceIn, user: User = Depends(curren
     acc.discord_custom_emoji = inp.discord_custom_emoji
     acc.keep_online = inp.keep_online
     db.commit()
-    from app.worker import restart_gateway, stop_gateway
+    from app.worker import restart_gateway, start_gateway
     if inp.keep_online:
         await restart_gateway(aid)
     else:
-        await stop_gateway(aid)
+        # Bug fix: sebelumnya cuma stop_gateway -> presence baru tidak pernah dikirim.
+        # start_gateway kirim presence one-shot (connect, kirim, disconnect).
+        await start_gateway(aid)
     return {"ok": True}
 
 @router.patch("/accounts/{aid}/webhook")
