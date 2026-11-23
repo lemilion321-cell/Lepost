@@ -1336,9 +1336,9 @@ function setupTokenCheck() {
 
 async function submitAccount(e) {
   e.preventDefault();
-  const label = $('acc-label').value.trim();
-  const token = $('acc-token').value.trim();
-  const proxy = $('acc-proxy').value.trim();
+  const label = $('acc-label')?.value.trim() || '';
+  const token = $('acc-token')?.value.trim() || '';
+  const proxy = $('acc-proxy')?.value.trim() || '';
   if (!label || !token) return toast('Nama akun dan token wajib diisi.', true);
   const btn = e.submitter || e.target.querySelector('[type=submit]');
   setBusy(btn, true);
@@ -1349,7 +1349,7 @@ async function submitAccount(e) {
     if (status) status.textContent = '';
     closeDialog('dlg-add-acc');
     await loadAccounts();
-    renderAccountList();
+    renderAccountList(true);
     loadStats();
     toast('Akun ditambahkan.');
   } catch (err) { toast(err.message, true); }
