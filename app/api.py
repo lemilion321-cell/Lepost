@@ -536,6 +536,8 @@ def redeem(inp: RedeemIn, user: User = Depends(current_user), db: Session = Depe
         ul.expires_at = new_exp
         ul.max_accounts = lic.max_accounts
         ul.max_queries = lic.max_queries
+        ul.allow_bypass = lic.allow_bypass or ul.allow_bypass
+        ul.allow_dashboard = lic.allow_dashboard or ul.allow_dashboard
     else:
         db.add(UserLicense(
             user_id=user.id, expires_at=new_exp,
@@ -1266,7 +1268,9 @@ async def update_presence(aid: int, inp: PresenceIn, user: User = Depends(curren
     db.commit()
     # Kirim status + custom status via REST API supaya persisten (bukan gateway yang mati beberapa detik)
     async with Discord(_dec_token(acc.token_enc), acc.proxy) as dc:
-        await dc.set_custom_status(inp.discord_custom_text, inp.discord_custom_emoji, inp.discord_status)
+        res = await dc.set_custom_status(inp.discord_custom_text, inp.discord_custom_emoji, inp.discord_status)
+        if isinstance(res, dict) and "error" in res:
+            _discord_fail(res, "Gagal simpan status Discord")
     from app.worker import restart_gateway, stop_gateway
     if inp.keep_online:
         await restart_gateway(aid)

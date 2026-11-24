@@ -179,6 +179,10 @@ def _migrate():
                 con.execute(text("ALTER TABLE accounts ADD COLUMN rpc_json TEXT NOT NULL DEFAULT '{}'"))
             if "keep_online" not in cols:
                 con.execute(text("ALTER TABLE accounts ADD COLUMN keep_online INTEGER NOT NULL DEFAULT 0"))
+            if "dc_id" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN dc_id VARCHAR(32) NOT NULL DEFAULT ''"))
+            if "dc_avatar" not in cols:
+                con.execute(text("ALTER TABLE accounts ADD COLUMN dc_avatar VARCHAR(128) NOT NULL DEFAULT ''"))
 
     if "logs" in insp.get_table_names():
         with engine.begin() as con:
